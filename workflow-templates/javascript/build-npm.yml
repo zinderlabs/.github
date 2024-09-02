@@ -1,6 +1,11 @@
 name: dummy workflow
 
 on:
+  workflow_call:
+    inputs:
+      message:
+        required: true
+        type: string
   push:
     branches: [$default-branch]
   pull_request:
@@ -9,9 +14,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
       - name: Run a one-line script
-        run: echo Hello from GitHub Actions!
+        run: echo Hello from GitHub Actions! ${{ inputs.message }}
