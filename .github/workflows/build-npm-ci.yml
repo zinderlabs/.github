@@ -1,16 +1,31 @@
-name: dummy workflow
+name: Build NPM project
 
 on:
   workflow_call:
     inputs:
-      message:
+      DEV_BUILD_COMMAND:
+        required: false
+        type: string
+      PRD_BUILD_COMMAND:
         required: true
         type: string
+      NODE_VERSION:
+        required: false
+        type: string
+        default: "18"
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ${{ inputs.NODE_VERSION }}
     steps:
       - uses: actions/checkout@v4
-      - name: Run a one-line script
-        run: echo Hello from GitHub Actions! ${{ inputs.message }}
+      - name: Using Node version ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build --if-present
