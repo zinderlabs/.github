@@ -23,14 +23,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set Build Command
-        id: set-build-command
-        run: |
-          if [ "${{ inputs.ENVIRONMENT }}" == "prd" ]; then
-            echo "BUILD_COMMAND=${{ inputs.PRD_BUILD_COMMAND }}" >> $GITHUB_ENV
-          else
-            echo "BUILD_COMMAND=${{ inputs.DEV_BUILD_COMMAND }}" >> $GITHUB_ENV
-
       - name: Using Node version ${{ inputs.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
@@ -38,4 +30,9 @@ jobs:
           cache: "npm"
       - run: npm ci
       - name: Run Build Command
-        run: ${{ env.BUILD_COMMAND }}
+        run: |
+          if [ "${{ inputs.ENVIRONMENT }}" == "prd" ]; then
+            ${{ env.PRD_BUILD_COMMAND }} --if-present
+          else
+            ${{ env.DEV_BUILD_COMMAND }} --if-present
+          fi
