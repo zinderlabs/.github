@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       DEV_BUILD_COMMAND:
-        required: false
+        required: true
         type: string
       PRD_BUILD_COMMAND:
         required: true
@@ -32,7 +32,7 @@ jobs:
       - name: Run Build Command
         run: |
           if [ "${{ inputs.ENVIRONMENT }}" == "prd" ]; then
-            ${{ env.PRD_BUILD_COMMAND }} --if-present
+            ${{ inputs.PRD_BUILD_COMMAND }} --if-present
           else
-            ${{ env.DEV_BUILD_COMMAND }} --if-present
+            ${{ inputs.DEV_BUILD_COMMAND }} --if-present
           fi
