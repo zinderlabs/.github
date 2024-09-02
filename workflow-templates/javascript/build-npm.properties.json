@@ -1,0 +1,7 @@
+{
+  "name": "dummy workflow",
+  "description": "A workflow template for building a Node.js project with npm",
+  "iconName": "",
+  "categories": ["JavaScript", "npm"],
+  "filePatterns": ["package-lock.json", "yarn.lock", "pnpm-lock.yaml"]
+}
