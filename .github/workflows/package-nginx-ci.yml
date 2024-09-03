@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: zinderlabs/.github
-          path: ci-central
+          path: ./ci-central
 
       - name: Debug Dockerfile path
         run: echo "Contents of Dockerfile ${{ env.DOCKERFILE }}:" || cat ${{ env.DOCKERFILE }}
