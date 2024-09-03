@@ -1,4 +1,4 @@
-name: Package Nginx
+name: Create Nginx Docker image
 
 on:
   workflow_call:
@@ -25,29 +25,23 @@ jobs:
       packages: write
       id-token: write
     steps:
-      # Checkout the repository to the GitHub Actions runner
+      # Checkout the repository (which repository triggered this workflow)
       - name: Checkout repository ${{ github.repository }}
         uses: actions/checkout@v4
 
-      # Checkout the repository to the workflow resources
+      # Checkout the current repository (which we're currently in)
       - name: Checkout repository workflow resources
         uses: actions/checkout@v4
         with:
           repository: zinderlabs/.github
           path: ./ci-central
 
-      - name: DEBUG Dockerfile path
-        run: |
-          echo "Contents of Dockerfile ${{ env.DOCKERFILE }}:"
-          cat ${{ env.DOCKERFILE }} || echo "File not found"
-          ls -R ./ci-central
-
-      - name: DEBUG List directory contents
-        run: |
-          echo "Root directory:"
-          ls -R
-          echo "ci-central directory:"
-          ls -R ./ci-central
+      # Download build artifact
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.BUILD_DIRECTORY }}
+          path: ${{ inputs.BUILD_DIRECTORY }}
 
       # Cosign is a tool for verifying container images against the
       # trusted root of trust. It prevents an attacker from
@@ -86,6 +80,7 @@ jobs:
         with:
           #   context: .
           file: ${{ env.DOCKERFILE }}
+          build-args: BUILD_PATH=${{ inputs.BUILD_DIRECTORY }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

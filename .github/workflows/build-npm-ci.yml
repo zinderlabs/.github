@@ -17,18 +17,27 @@ on:
         required: true
         type: string
         default: "dev"
+      BUILD_DIRECTORY:
+        required: false
+        type: string
+        default: "dist"
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository ${{ github.repository }}
+        uses: actions/checkout@v4
+
       - name: Using Node version ${{ inputs.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.NODE_VERSION }}
           cache: "npm"
-      - run: npm ci
+
+      - name: Installing node dependencies
+        run: npm ci
+
       - name: Run Build Command
         run: |
           if [ "${{ inputs.ENVIRONMENT }}" == "prd" ]; then
@@ -36,3 +45,9 @@ jobs:
           else
             npm run ${{ inputs.DEV_BUILD_COMMAND }} --if-present
           fi
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.BUILD_DIRECTORY }}
+          path: ${{ inputs.BUILD_DIRECTORY }}
