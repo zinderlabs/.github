@@ -1,10 +1,14 @@
 ARG NGINX_VERSION=1.17
 
 FROM nginx:${NGINX_VERSION}-alpine
+
 ARG BUILD_PATH=dist
+ARG NGINX_CONF_PATH
+
 COPY ./${BUILD_PATH} /usr/share/nginx/html
 RUN rm /etc/nginx/conf.d/default.conf
-ARG NGINX_CONF_PATH
 COPY ${NGINX_CONF_PATH} /etc/nginx/conf.d
+
 EXPOSE 80
+
 CMD ["nginx", "-g", "daemon off;"]
