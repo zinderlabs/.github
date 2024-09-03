@@ -44,9 +44,6 @@ jobs:
           name: ${{ inputs.BUILD_DIRECTORY }}
           path: ${{ env.BUILD_ARTIFACT_PATH }}
 
-      - name: List contents of ${{ env.BUILD_ARTIFACT_PATH }} directory
-        run: ls -R ${{ env.BUILD_ARTIFACT_PATH }}
-
       # Cosign is a tool for verifying container images against the
       # trusted root of trust. It prevents an attacker from
       # introducing a malicious container image into a system.
@@ -82,9 +79,10 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@v5
         with:
-          context: .
           file: ${{ env.DOCKERFILE }}
-          build-args: BUILD_PATH=${{ env.BUILD_ARTIFACT_PATH }}
+          build-args: |
+            - BUILD_PATH=${{ env.BUILD_ARTIFACT_PATH }}
+            - NGINX_VERSION=${{ inputs.NGINX_VERSION }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
