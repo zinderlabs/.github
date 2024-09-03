@@ -15,9 +15,9 @@ on:
 env:
   CONTAINER_REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
-  DOCKERFILE: ${{ github.workspace }}/ci-central/workflow-resources/docker/javascript/Dockerfile.nginx
+  DOCKERFILE: ./ci-central/workflow-resources/docker/javascript/Dockerfile.nginx
+  NGINX_CONFIG_PATH: ./ci-central/workflow-resources/docker/javascript/nginx.conf
   BUILD_ARTIFACT_PATH: ${{ github.workspace }}/${{ inputs.BUILD_DIRECTORY }}
-  NGINX_CONFIG_PATH: ${{ github.workspace }}/ci-central/workflow-resources/docker/javascript/nginx.conf
 
 jobs:
   package:
@@ -37,9 +37,6 @@ jobs:
         with:
           repository: zinderlabs/.github
           path: ./ci-central
-
-      - name: Debug print contents of NGINX config file
-        run: cat ${{ env.NGINX_CONFIG_PATH }} || "No NGINX config file found"
 
       # Download build artifact
       - name: Download build artifact
@@ -87,8 +84,8 @@ jobs:
           file: ${{ env.DOCKERFILE }}
           build-args: |
             BUILD_PATH=${{ env.BUILD_ARTIFACT_PATH }}
-            NGINX_VERSION=${{ inputs.NGINX_VERSION }}
             NGINX_CONF_PATH=${{ env.NGINX_CONFIG_PATH }}
+            NGINX_VERSION=${{ inputs.NGINX_VERSION }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
