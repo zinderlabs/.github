@@ -15,7 +15,7 @@ on:
 env:
   CONTAINER_REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
-  DOCKERFILE: ./workflow-resources/docker/javascript/Dockerfile.nginx
+  DOCKERFILE: zinderlabs/.github/workflow-resources/docker/javascript/Dockerfile.nginx
 
 jobs:
   package:
@@ -30,7 +30,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Debug Dockerfile path
-        run: echo ${{ env.DOCKERFILE }}
+        run: echo "Contents of Dockerfile ${{ env.DOCKERFILE }}" || cat ${{ env.DOCKERFILE }}
 
       # Cosign is a tool for verifying container images against the
       # trusted root of trust. It prevents an attacker from
