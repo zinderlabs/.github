@@ -15,7 +15,7 @@ on:
 env:
   CONTAINER_REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
-  DOCKERFILE: ./.github/workflows/resources/docker/javascript/Dockerfile.nginx
+  DOCKERFILE: ./workflow-resources/docker/javascript/Dockerfile.nginx
 
 jobs:
   package:
