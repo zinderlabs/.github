@@ -29,6 +29,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Debug Dockerfile path
+        run: echo ${{ env.DOCKERFILE }}
+
       # Cosign is a tool for verifying container images against the
       # trusted root of trust. It prevents an attacker from
       # introducing a malicious container image into a system.
@@ -64,7 +67,7 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@v5
         with:
-          context: .
+          #   context: .
           file: ${{ env.DOCKERFILE }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
