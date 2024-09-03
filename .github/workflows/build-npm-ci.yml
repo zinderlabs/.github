@@ -32,7 +32,7 @@ jobs:
       - name: Run Build Command
         run: |
           if [ "${{ inputs.ENVIRONMENT }}" == "prd" ]; then
-            ${{ inputs.PRD_BUILD_COMMAND }} --if-present
+            npm run ${{ inputs.PRD_BUILD_COMMAND }} --if-present
           else
-            ${{ inputs.DEV_BUILD_COMMAND }} --if-present
+            npm run ${{ inputs.DEV_BUILD_COMMAND }} --if-present
           fi
