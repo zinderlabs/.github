@@ -16,8 +16,8 @@ env:
   CONTAINER_REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
   DOCKERFILE: ${{ github.workspace }}/ci-central/workflow-resources/docker/javascript/Dockerfile.nginx
-  BUILD_ARTIFACT_PATH: ${{github.workspace}}/${{ inputs.BUILD_DIRECTORY }}
-  NGINX_CONFIG_PATH: ${{github.workspace}}/ci-central/workflow-resources/docker/javascript/nginx.conf
+  BUILD_ARTIFACT_PATH: ${{ github.workspace }}/${{ inputs.BUILD_DIRECTORY }}
+  NGINX_CONFIG_PATH: ${{ github.workspace }}/ci-central/workflow-resources/docker/javascript/nginx.conf
 
 jobs:
   package:
