@@ -40,7 +40,7 @@ jobs:
         run: echo "Contents of Dockerfile ${{ env.DOCKERFILE }}" || cat ${{ env.DOCKERFILE }}
 
       - name: Debug workflow resources path
-        run: echo "Contents of workflow resources || ls -la zinderlabs/.github/workflow-resources
+        run: echo "Contents of workflow resources" || ls -la zinderlabs/.github/workflow-resources
 
       # Cosign is a tool for verifying container images against the
       # trusted root of trust. It prevents an attacker from
