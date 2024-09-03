@@ -42,6 +42,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.BUILD_DIRECTORY }}
+          path: ${{ env.BUILD_ARTIFACT_PATH }}
 
       - name: List contents of ${{ env.BUILD_ARTIFACT_PATH }} directory
         run: ls -R ${{ env.BUILD_ARTIFACT_PATH }}
