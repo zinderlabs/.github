@@ -38,6 +38,9 @@ jobs:
           repository: zinderlabs/.github
           path: ./ci-central
 
+      - name: Debug print contents of NGINX config file
+        run: cat ${{ env.NGINX_CONFIG_PATH }} || "No NGINX config file found"
+
       # Download build artifact
       - name: Download build artifact
         uses: actions/download-artifact@v4
