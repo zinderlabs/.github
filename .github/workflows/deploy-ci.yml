@@ -30,7 +30,7 @@ jobs:
       - name: Initialize kubectl
         uses: actions-hub/kubectl@master
         env:
-          KUBE_CONFIG: ${{ secrets.KUBECONFIG }}
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
 
       #   - name: Install kubectl
       #     uses: azure/setup-kubectl@v4
