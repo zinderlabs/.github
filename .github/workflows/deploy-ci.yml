@@ -27,24 +27,22 @@ jobs:
           repository: zinderlabs/.github
           path: ci-central
 
-      #   - name: Initialize kubectl
-      #     uses: actions-hub/kubectl@master
-      #     env:
-      #       KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
-
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
+
+      - name: Debug kubeconfig secret
+        run: |
+          echo "KUBECONFIG secret length: ${#KUBECONFIG}"
+        env:
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+
       - name: Set up kubeconfig
         uses: azure/k8s-set-context@v4
         with:
           method: kubeconfig
-          kubeconfig: ${{ secrets.KUBE_CONFIG }}
-
-      #   - name: Set up Kubeconfig
-      #     run: |
-      #       mkdir -p $HOME/.kube
-      #       echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
-      #       chmod 600 $HOME/.kube/config
+          kubeconfig: $KUBECONFIG
+        env:
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
 
       - name: Create secret in K8s for accessing the container registry
         run: kubectl create namespace ${{ env.PROJECT_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
