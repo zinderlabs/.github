@@ -30,8 +30,6 @@ jobs:
       # Checkout the repository (which repository triggered this workflow)
       - name: Checkout repository ${{ github.repository }}
         uses: actions/checkout@v4
-        with:
-          path: main
 
       # Checkout the current repository (which we're currently in)
       - name: Checkout repository workflow resources
@@ -46,17 +44,6 @@ jobs:
         with:
           name: ${{ inputs.BUILD_DIRECTORY }}
           path: ${{ env.BUILD_ARTIFACT_PATH }}
-
-      - name: List directory contents
-        run: |
-          echo "Root directory:"
-          ls -la
-          echo "ci-central directory:"
-          ls -la ci-central
-          echo "workspace directory:"
-          ls -la ${{ github.workspace }}
-          echo "Build artifact directory:"
-          ls -la ${{ env.BUILD_ARTIFACT_PATH }}
 
       # Cosign is a tool for verifying container images against the
       # trusted root of trust. It prevents an attacker from
