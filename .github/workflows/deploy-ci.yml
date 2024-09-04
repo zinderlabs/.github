@@ -6,8 +6,8 @@ on:
 env:
   CONTAINER_REGISTRY: ghcr.io
   HELM_VALUES: ${{ github.workspace }}/ci-central/workflow-resources/helm/platform/values.yaml
-  PROJECT_NAME: ${{ github.repository.name }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
-  PROJECT_NAMESPACE: ${{ github.repository.name }}-${{ github.repository_id }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
+  PROJECT_NAME: ${{ github.event.repository.name }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
+  PROJECT_NAMESPACE: ${{ github.event.repository.name }}-${{ github.repository_id }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
 
 jobs:
   deploy:
