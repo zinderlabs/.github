@@ -27,13 +27,18 @@ jobs:
           repository: zinderlabs/.github
           path: ci-central
 
-      - name: Initialize kubectl
-        uses: actions-hub/kubectl@master
-        env:
-          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+      #   - name: Initialize kubectl
+      #     uses: actions-hub/kubectl@master
+      #     env:
+      #       KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
 
-      #   - name: Install kubectl
-      #     uses: azure/setup-kubectl@v4
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+      - name: Set up kubeconfig
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
       #   - name: Set up Kubeconfig
       #     run: |
@@ -42,27 +47,21 @@ jobs:
       #       chmod 600 $HOME/.kube/config
 
       - name: Create secret in K8s for accessing the container registry
-        uses: actions-hub/kubectl@master
-        with:
-          args: create namespace ${{ env.PROJECT_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+        run: kubectl create namespace ${{ env.PROJECT_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Create secret in K8s for accessing the container registry
-        uses: actions-hub/kubectl@master
-        with:
-          args: create secret docker-registry github-registry \
-            --namespace=${{ env.PROJECT_NAMESPACE }} \
-            --docker-server=${{ env.CONTAINER_REGISTRY }} \
-            --docker-username=${{ github.actor }} \
-            --docker-password=${{ secrets.GITHUB_TOKEN }} \
-            --dry-run=client -o yaml | kubectl apply -f -
+        run: kubectl create secret docker-registry github-registry \
+          --namespace=${{ env.PROJECT_NAMESPACE }} \
+          --docker-server=${{ env.CONTAINER_REGISTRY }} \
+          --docker-username=${{ github.actor }} \
+          --docker-password=${{ secrets.GITHUB_TOKEN }} \
+          --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Create secret in K8s for the application
-        uses: actions-hub/kubectl@master
-        with:
-          args: create secret generic app-secret \
-            --namespace=${{ env.PROJECT_NAMESPACE }} \
-            --from-literal=APP_SECRET=${{ env.ENV_SECRETS }} \
-            --dry-run=client -o yaml | kubectl apply -f -
+        run: kubectl create secret generic app-secret \
+          --namespace=${{ env.PROJECT_NAMESPACE }} \
+          --from-literal=APP_SECRET=${{ env.ENV_SECRETS }} \
+          --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Create secret hash and source env variables
         run: |
