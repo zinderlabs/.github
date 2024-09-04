@@ -30,13 +30,15 @@ jobs:
       # Checkout the repository (which repository triggered this workflow)
       - name: Checkout repository ${{ github.repository }}
         uses: actions/checkout@v4
+        with:
+          path: main
 
       # Checkout the current repository (which we're currently in)
       - name: Checkout repository workflow resources
         uses: actions/checkout@v4
         with:
           repository: zinderlabs/.github
-          path: ./ci-central
+          path: ci-central
 
       # Download build artifact
       - name: Download build artifact
@@ -44,6 +46,13 @@ jobs:
         with:
           name: ${{ inputs.BUILD_DIRECTORY }}
           path: ${{ env.BUILD_ARTIFACT_PATH }}
+
+      - name: List directory contents
+        run: |
+          echo "Root directory:"
+          ls -R
+          echo "ci-central directory:"
+          ls -R ci-central
 
       # Cosign is a tool for verifying container images against the
       # trusted root of trust. It prevents an attacker from
@@ -80,7 +89,7 @@ jobs:
         id: build-and-push
         uses: docker/build-push-action@v5
         with:
-          #   context: .
+          context: .
           file: ${{ env.DOCKERFILE }}
           build-args: |
             NGINX_VERSION=${{ inputs.NGINX_VERSION }}
