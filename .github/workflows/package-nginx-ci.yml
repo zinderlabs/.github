@@ -55,6 +55,8 @@ jobs:
           ls -la ci-central
           echo "workspace directory:"
           ls -la ${{ github.workspace }}
+          echo "Build artifact directory:"
+          ls -la ${{ env.BUILD_ARTIFACT_PATH }}
 
       # Cosign is a tool for verifying container images against the
       # trusted root of trust. It prevents an attacker from
