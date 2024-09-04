@@ -5,6 +5,9 @@ FROM nginx:${NGINX_VERSION}-alpine
 ARG BUILD_PATH=dist
 ARG NGINX_CONF_PATH
 
+# Debug current path and files
+RUN ls -la && pwd
+
 COPY ${BUILD_PATH} /usr/share/nginx/html
 # RUN rm /etc/nginx/conf.d/default.conf
 # COPY ${NGINX_CONF_PATH} /etc/nginx/conf.d
