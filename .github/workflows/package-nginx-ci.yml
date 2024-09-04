@@ -50,9 +50,11 @@ jobs:
       - name: List directory contents
         run: |
           echo "Root directory:"
-          ls -R
+          ls -la
           echo "ci-central directory:"
-          ls -R ci-central
+          ls -la ci-central
+          echo "workspace directory:"
+          ls -la ${{ github.workspace }}
 
       # Cosign is a tool for verifying container images against the
       # trusted root of trust. It prevents an attacker from
