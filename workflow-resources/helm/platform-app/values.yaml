@@ -1,0 +1,32 @@
+# Default values for platform-app.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+deployment:
+  exposedPort: 80
+  resources:
+    requests:
+      memory: "32Mi"
+      cpu: "150m"
+    limits:
+      memory: "64Mi"
+      cpu: "250m"
+
+
+postgres:
+  enabled: false
+  serviceName: "$POSTGRES_HOST"
+  storage: "4Gi"
+  database:
+    schema: "$POSTGRES_DB"
+    user: "$POSTGRES_USER"
+    password: "$POSTGRES_PASSWORD"
+  backup:
+    enabled: false
+
+ingress:
+  enabled: false
+
+app:
+  name: "$CI_PROJECT_NAME"
+  tier: "backend"

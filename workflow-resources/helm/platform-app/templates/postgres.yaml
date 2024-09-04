@@ -1,0 +1,91 @@
+{{- if .Values.postgres.enabled }}
+# Postgres
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.postgres.serviceName }}
+  namespace: {{ .Values.deployment.namespace }}
+  labels:
+    tier: "database"
+    component: "postgres"
+    app: {{ .Values.app.name | quote }}
+    env: {{ .Values.deployment.environment | quote }}
+spec:
+  ports:
+    - port: 5432
+      name: postgres
+  type: ClusterIP
+  selector:
+    tier: "database"
+    component: "postgres"
+    app: {{ .Values.app.name | quote }}
+    env: {{ .Values.deployment.environment | quote }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-statefulset
+  namespace: {{ .Values.deployment.namespace }}
+  labels:
+    tier: "database"
+    component: "postgres"
+    app: {{ .Values.app.name | quote }}
+    env: {{ .Values.deployment.environment | quote }}
+spec:
+  serviceName: "postgres"
+  replicas: 1
+  selector:
+    matchLabels:
+      tier: "database"
+      component: "postgres"
+      app: {{ .Values.app.name | quote }}
+      env: {{ .Values.deployment.environment | quote }}
+  template:
+    metadata:
+      labels:
+        tier: "database"
+        component: "postgres"
+        app: {{ .Values.app.name | quote }}
+        env: {{ .Values.deployment.environment | quote }}
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:10.5
+        envFrom:
+          - secretRef:
+              name: db-secret
+        ports:
+          - containerPort: 5432
+            name: postgresdb
+        volumeMounts:
+        - name: postgres-pvc
+          mountPath: /var/lib/postgresql/data
+          subPath: postgres
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-pvc
+      labels:
+        tier: "database"
+        component: "postgres"
+        app: {{ .Values.app.name | quote }}
+        env: {{ .Values.deployment.environment | quote }}
+    spec:
+      storageClassName: do-block-storage
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: {{ .Values.postgres.storage }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secret
+  namespace: {{ .Values.deployment.namespace }}
+type: Opaque
+data:
+  POSTGRES_HOST: {{ .Values.postgres.serviceName | b64enc | quote }}
+  POSTGRES_DB: {{ .Values.postgres.database.schema | b64enc | quote }}
+  POSTGRES_USER: {{ .Values.postgres.database.user | b64enc | quote }}
+  POSTGRES_PASSWORD: {{ .Values.postgres.database.password | b64enc | quote }}
+{{- end }}

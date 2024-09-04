@@ -1,0 +1,37 @@
+name: Deploy Platform application to K8s
+
+on:
+  workflow_call:
+
+env:
+  CONTAINER_REGISTRY: ghcr.io
+  HELM_VALUES: ${{ github.workspace }}/ci-central/workflow-resources/helm/platform/values.yaml
+  PROJECT_NAME: ${{ github.repository.name }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
+  PROJECT_NAMESPACE: ${{ github.repository.name }}-${{ github.repository_id }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repository (which repository triggered this workflow)
+      - name: Checkout repository ${{ github.repository }}
+        uses: actions/checkout@v4
+        with:
+          path: main
+
+      # Checkout the current repository (which we're currently in)
+      - name: Checkout repository workflow resources
+        uses: actions/checkout@v4
+        with:
+          repository: zinderlabs/.github
+          path: ci-central
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Deploy application using helm
+        uses: WyriHaximus/github-action-helm3@v3
+        with:
+          #TODO
+          exec: |
+            helm upgrade --install

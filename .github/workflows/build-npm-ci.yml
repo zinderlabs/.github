@@ -3,20 +3,13 @@ name: Build NPM project
 on:
   workflow_call:
     inputs:
-      DEV_BUILD_COMMAND:
-        required: true
-        type: string
-      PRD_BUILD_COMMAND:
+      BUILD_COMMAND:
         required: true
         type: string
       NODE_VERSION:
         required: false
         type: string
         default: "18"
-      ENVIRONMENT:
-        required: true
-        type: string
-        default: "dev"
       BUILD_DIRECTORY:
         required: false
         type: string
@@ -39,12 +32,7 @@ jobs:
         run: npm ci
 
       - name: Run Build Command
-        run: |
-          if [ "${{ inputs.ENVIRONMENT }}" == "prd" ]; then
-            npm run ${{ inputs.PRD_BUILD_COMMAND }} --if-present
-          else
-            npm run ${{ inputs.DEV_BUILD_COMMAND }} --if-present
-          fi
+        run: npm run ${{ inputs.BUILD_COMMAND }} --if-present
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4

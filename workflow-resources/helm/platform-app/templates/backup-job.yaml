@@ -1,0 +1,51 @@
+{{- if .Values.postgres.backup.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-job
+  namespace: {{ .Values.deployment.namespace }}
+  labels:
+    tier: "database"
+    component: "backup"
+    app: {{ .Values.app.name | quote }}
+    env: {{ .Values.deployment.environment | quote }}
+spec:
+  # Daily backup
+  schedule: "0 0 * * *"
+  jobTemplate:
+    metadata:
+      labels:
+        tier: "database"
+        component: "backup"
+        app: {{ .Values.app.name | quote }}
+        env: {{ .Values.deployment.environment | quote }}
+    spec:
+      template:
+        spec:
+          imagePullSecrets:
+            - name: gitlab-registry
+          containers:
+            - name: database-backup
+              image: registry.zinderlabs.com/platform/cicd-central:backup-job
+              imagePullPolicy: Always
+              envFrom:
+                - secretRef:
+                    name: db-secret
+                - secretRef:
+                    name: db-backup-secret
+          restartPolicy: Never
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-backup-secret
+  namespace: {{ .Values.deployment.namespace }}
+type: Opaque
+data:
+  DUMP_FOLDER: {{ .Values.app.name | b64enc | quote }}
+  {{- if .Values.deployment.hideEnvironment }}
+  DUMP_NAME: {{ .Values.postgres.serviceName | b64enc | quote }}
+  {{- else }}
+  DUMP_NAME: {{ printf "%s-%s" .Values.postgres.serviceName .Values.deployment.environment | b64enc | quote }}
+  {{- end}}
+{{- end}}
