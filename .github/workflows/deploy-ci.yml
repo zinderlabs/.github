@@ -43,6 +43,9 @@ jobs:
           chmod 600 $HOME/.kube/config
           echo "Kubeconfig file created at $HOME/.kube/config"
 
+      - name: Print out kubeconfig file
+        run: cat $HOME/.kube/config
+
       - name: Verify kubectl configuration
         run: |
           if kubectl config view --raw > /dev/null 2>&1; then
