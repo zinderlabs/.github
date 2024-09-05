@@ -30,41 +30,33 @@ jobs:
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
 
-      #   - name: Debug kubeconfig content
-      #     env:
-      #       KUBECONFIG: ${{ secrets.KUBE_CONFIG }}
-      #     run: |
-      #       echo "KUBECONFIG secret length: ${#KUBECONFIG}"
-      #       if [ -n "$KUBECONFIG" ]; then
-      #         echo "First few lines of KUBECONFIG (masked):"
-      #         echo "$KUBECONFIG" | sed 's/./*/g' | head -n 5
-      #         echo "File format check:"
-      #         echo "$KUBECONFIG" | file -
-      #         echo "Is it base64 encoded?"
-      #         echo "$KUBECONFIG" | base64 -d > /dev/null 2>&1 && echo "Yes, it's base64 encoded" || echo "No, it's not base64 encoded"
-      #         echo "Content structure (masked):"
-      #         echo "$KUBECONFIG" | sed 's/./*/g' | yq eval . -
-      #       else
-      #         echo "KUBECONFIG is empty or not set"
-      #       fi
+      #   - name: Set up kubeconfig
+      #     uses: azure/k8s-set-context@v4
+      #     with:
+      #       method: kubeconfig
+      #       kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
-      - name: Set up kubeconfig
-        uses: azure/k8s-set-context@v4
-        with:
-          method: kubeconfig
-          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+      - name: Set up kubeconfig manually
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+          echo "Kubeconfig file created at $HOME/.kube/config"
 
-      #   - name: Verify kubectl configuration (before setting it manually)
-      #     run: kubectl config view --raw -o json
-
-      #   - name: Set up kubeconfig manually
-      #     run: |
-      #       mkdir -p $HOME/.kube
-      #       echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
-      #       chmod 600 $HOME/.kube/config
-
-      #   - name: Verify kubectl configuration (after setting it manually)
-      #     run: kubectl config view --raw -o json
+      - name: Verify kubectl configuration
+        run: |
+          if kubectl config view --raw > /dev/null 2>&1; then
+            echo "kubectl can read the config file"
+            echo "Cluster information:"
+            kubectl config view --minify --flatten --output 'jsonpath={.clusters[].name}'
+            echo "Context information:"
+            kubectl config view --minify --flatten --output 'jsonpath={.contexts[].name}'
+            echo "User information:"
+            kubectl config view --minify --flatten --output 'jsonpath={.users[].name}'
+          else
+            echo "Error: kubectl cannot read the config file"
+            exit 1
+          fi
 
       - name: Create secret in K8s for accessing the container registry
         run: kubectl create namespace ${{ env.PROJECT_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
