@@ -57,7 +57,7 @@ jobs:
           KUBECONFIG: ${{ secrets.KUBE_CONFIG }}
 
       - name: Verify kubectl configuration (before setting it manually)
-        run: kubectl config view --raw
+        run: kubectl config view --raw -o json
 
       - name: Set up kubeconfig manually
         run: |
@@ -66,7 +66,7 @@ jobs:
           chmod 600 $HOME/.kube/config
 
       - name: Verify kubectl configuration (after setting it manually)
-        run: kubectl config view --raw
+        run: kubectl config view --raw -o json
 
       - name: Create secret in K8s for accessing the container registry
         run: kubectl create namespace ${{ env.PROJECT_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
