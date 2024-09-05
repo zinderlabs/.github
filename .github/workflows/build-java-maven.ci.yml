@@ -1,0 +1,39 @@
+name: Build Java Maven project
+
+on:
+  workflow_call:
+    inputs:
+      JAVA_VERSION:
+        required: false
+        type: string
+        default: "17"
+      BUILD_COMMAND:
+        required: false
+        type: string
+        default: "package"
+      BUILD_DIRECTORY:
+        required: false
+        type: string
+        default: "target"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository ${{ github.repository }}
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ inputs.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Build with Maven
+        run: mvn clean ${{ inputs.BUILD_COMMAND }} --batch-mode --update-snapshots 
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+            name: Package
+            path: ${{ inputs.BUILD_DIRECTORY }}
