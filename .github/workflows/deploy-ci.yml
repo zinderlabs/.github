@@ -30,10 +30,8 @@ jobs:
       - name: Set up kubeconfig manually
         run: |
           mkdir ${HOME}/.kube
-          echo "$KUBECONFIG" | base64 --decode > ${HOME}/.kube/config
+          echo ${{ secrets.KUBE_CONFIG }} | base64 --decode > ${HOME}/.kube/config
           chmod 600 ${HOME}/.kube/config
-        env:
-          KUBECONFIG: ${{ secrets.KUBE_CONFIG }}
 
       - name: Verify kubeconfig file
         run: |
