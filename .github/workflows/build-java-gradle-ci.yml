@@ -10,7 +10,7 @@ on:
       BUILD_COMMAND:
         required: false
         type: string
-        default: "build"
+        default: "clean build" # if we want to skip tests: -x test
       BUILD_DIRECTORY:
         required: false
         type: string
