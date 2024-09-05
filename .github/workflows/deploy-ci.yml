@@ -9,6 +9,7 @@ env:
   PROJECT_NAME: ${{ github.event.repository.name }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
   PROJECT_NAMESPACE: ${{ github.event.repository.name }}-${{ github.repository_id }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
   ENV_SECRETS: ${{ github.ref == 'refs/heads/main' && secrets.ENV_SECRETS_PRD || secrets.ENV_SECRETS_DEV }}
+  KUBECONFIG: ${{ secrets.KUBE_CONFIG }}
 
 jobs:
   deploy:
@@ -34,12 +35,12 @@ jobs:
       #     uses: azure/k8s-set-context@v4
       #     with:
       #       method: kubeconfig
-      #       kubeconfig: ${{ secrets.KUBE_CONFIG }}
+      #       kubeconfig: "$KUBECONFIG"
 
       - name: Set up kubeconfig manually
         run: |
           mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
+          echo "$KUBECONFIG" > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
           echo "Kubeconfig file created at $HOME/.kube/config"
 
