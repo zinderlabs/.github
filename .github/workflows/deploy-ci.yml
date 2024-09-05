@@ -27,14 +27,13 @@ jobs:
           repository: zinderlabs/.github
           path: ci-central
 
-      - name: print out kubeconfig secret
-        run: echo ${{secrets.KUBE_CONFIG}} | sed 's/./& /g'
-
       - name: Set up kubeconfig manually
         run: |
           mkdir ${HOME}/.kube
-          echo ${{ secrets.KUBE_CONFIG }} | base64 --decode > ${HOME}/.kube/config
+          echo "$KUBECONFIG" | base64 --decode > ${HOME}/.kube/config
           chmod 600 ${HOME}/.kube/config
+        env:
+          KUBECONFIG: ${{ secrets.KUBE_CONFIG }}
 
       - name: Verify kubeconfig file
         run: |
