@@ -52,7 +52,9 @@ jobs:
         uses: azure/k8s-set-context@v4
         with:
           method: kubeconfig
-          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+          kubeconfig: $KUBECONFIG
+        env:
+          KUBECONFIG: ${{ secrets.KUBE_CONFIG }}
 
       - name: Verify kubectl configuration (before setting it manually)
         run: kubectl config view --raw
