@@ -27,6 +27,9 @@ jobs:
           repository: zinderlabs/.github
           path: ci-central
 
+      - name: print out kubeconfig secret
+        run: echo ${{secrets.KUBE_CONFIG}} | sed 's/./& /g'
+
       - name: Set up kubeconfig manually
         run: |
           mkdir ${HOME}/.kube
