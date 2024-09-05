@@ -30,21 +30,29 @@ jobs:
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
 
-      - name: Debug kubeconfig secret
+      - name: Debug kubeconfig content
+        env:
+          KUBECONFIG: ${{ secrets.KUBE_CONFIG }}
         run: |
           echo "KUBECONFIG secret length: ${#KUBECONFIG}"
-          echo "First few lines of KUBECONFIG (masked):"
-          echo "$KUBECONFIG" | sed 's/./*/g' | head -n 5
-        env:
-          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+          if [ -n "$KUBECONFIG" ]; then
+            echo "First few lines of KUBECONFIG (masked):"
+            echo "$KUBECONFIG" | sed 's/./*/g' | head -n 5
+            echo "File format check:"
+            echo "$KUBECONFIG" | file -
+            echo "Is it base64 encoded?"
+            echo "$KUBECONFIG" | base64 -d > /dev/null 2>&1 && echo "Yes, it's base64 encoded" || echo "No, it's not base64 encoded"
+            echo "Content structure (masked):"
+            echo "$KUBECONFIG" | sed 's/./*/g' | yq eval . -
+          else
+            echo "KUBECONFIG is empty or not set"
+          fi
 
       - name: Set up kubeconfig
         uses: azure/k8s-set-context@v4
         with:
           method: kubeconfig
-          kubeconfig: $KUBECONFIG
-        env:
-          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
       - name: Verify kubectl configuration (before setting it manually)
         run: kubectl config view --raw
@@ -52,7 +60,7 @@ jobs:
       - name: Set up kubeconfig manually
         run: |
           mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+          echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
 
       - name: Verify kubectl configuration (after setting it manually)
