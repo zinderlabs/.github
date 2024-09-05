@@ -50,13 +50,13 @@ jobs:
           --docker-password=${{ secrets.GITHUB_TOKEN }} \
           --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Create secret in K8s for the application
+      - name: Create or update secret in K8s for the application
         run: |
           kubectl create secret generic app-secret \
-            --namespace=${{ env.PROJECT_NAMESPACE }} \
-            --from-literal=APP_SECRET=${{ env.ENV_SECRETS }} \
-            --dry-run=client -o yaml | \
-          kubectl apply -f -
+          --namespace=${{ env.PROJECT_NAMESPACE }} \
+          --from-literal=APP_SECRET=${{ env.ENV_SECRETS }} \
+          --dry-run=client -o yaml | \
+          kubectl apply -f - --force
 
       - name: Create secret hash and source env variables
         run: |
