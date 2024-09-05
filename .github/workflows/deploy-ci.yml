@@ -35,24 +35,6 @@ jobs:
           mkdir ${HOME}/.kube
           echo ${{ secrets.KUBE_CONFIG }} | base64 --decode > ${HOME}/.kube/config
 
-      - name: Print out kubeconfig file
-        run: cat ${HOME}/.kube/config
-
-      - name: Verify kubectl configuration
-        run: |
-          if kubectl config view --raw > /dev/null 2>&1; then
-            echo "kubectl can read the config file"
-            echo "Cluster information:"
-            kubectl config view --minify --flatten --output 'jsonpath={.clusters[].name}'
-            echo "Context information:"
-            kubectl config view --minify --flatten --output 'jsonpath={.contexts[].name}'
-            echo "User information:"
-            kubectl config view --minify --flatten --output 'jsonpath={.users[].name}'
-          else
-            echo "Error: kubectl cannot read the config file"
-            exit 1
-          fi
-
       - name: Create secret in K8s for accessing the container registry
         run: kubectl create namespace ${{ env.PROJECT_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
 
