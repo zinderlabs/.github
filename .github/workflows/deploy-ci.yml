@@ -9,7 +9,6 @@ env:
   PROJECT_NAME: ${{ github.event.repository.name }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
   PROJECT_NAMESPACE: ${{ github.event.repository.name }}-${{ github.repository_id }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
   ENV_SECRETS: ${{ github.ref == 'refs/heads/main' && secrets.ENV_SECRETS_PRD || secrets.ENV_SECRETS_DEV }}
-  KUBECONFIG: ${{ secrets.KUBE_CONFIG }}
 
 jobs:
   deploy:
@@ -28,24 +27,13 @@ jobs:
           repository: zinderlabs/.github
           path: ci-central
 
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v4
-
-      #   - name: Set up kubeconfig
-      #     uses: azure/k8s-set-context@v4
-      #     with:
-      #       method: kubeconfig
-      #       kubeconfig: "$KUBECONFIG"
-
       - name: Set up kubeconfig manually
         run: |
-          mkdir -p $HOME/.kube
-          echo "$KUBECONFIG" > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
-          echo "Kubeconfig file created at $HOME/.kube/config"
+          mkdir ${HOME}/.kube
+          echo ${{ secrets.KUBE_CONFIG }} | base64 --decode > ${HOME}/.kube/config
 
       - name: Print out kubeconfig file
-        run: cat $HOME/.kube/config
+        run: cat ${HOME}/.kube/config
 
       - name: Verify kubectl configuration
         run: |
