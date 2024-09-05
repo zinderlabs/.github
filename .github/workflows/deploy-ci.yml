@@ -34,6 +34,43 @@ jobs:
         run: |
           mkdir ${HOME}/.kube
           echo ${{ secrets.KUBE_CONFIG }} | base64 --decode > ${HOME}/.kube/config
+          chmod 600 ${HOME}/.kube/config
+
+      - name: Verify kubeconfig file
+        run: |
+          echo "Kubeconfig directory contents:"
+          ls -la ${HOME}/.kube
+
+          if [ -s ${HOME}/.kube/config ]; then
+          echo "Kubeconfig file exists and is not empty"
+          file_size=$(du -b ${HOME}/.kube/config | cut -f1)
+          echo "Kubeconfig file size: $file_size bytes"
+          else
+          echo "Kubeconfig file is either empty or does not exist"
+          fi
+
+      - name: Check kubectl full configuration
+        run: |
+          kubectl config view --minify --flatten --output=yaml | grep -v "data:" | grep -v "token:"
+
+      - name: Check kubectl configuration
+        run: |
+          echo "Available contexts:"
+          kubectl config get-contexts
+
+          echo "Current context:"
+          kubectl config current-context
+
+          echo "Cluster endpoint:"
+          kubectl config view -o jsonpath='{.clusters[*].cluster.server}'
+
+      - name: Check cluster connectivity
+        run: |
+          echo "Attempting to connect to the cluster..."
+          kubectl cluster-info
+
+      - name: Check kubectl version
+        run: kubectl version --client
 
       - name: Create secret in K8s for accessing the container registry
         run: kubectl create namespace ${{ env.PROJECT_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
