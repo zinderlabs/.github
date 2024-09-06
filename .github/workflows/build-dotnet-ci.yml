@@ -27,7 +27,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ inputs.DOTNET_VERSION }}
-          cache: true
+          cache: ${{ hashFiles('**/packages.lock.json') != '' }}
 
       - name: Install dependencies
         run: dotnet restore
