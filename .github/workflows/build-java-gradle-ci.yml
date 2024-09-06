@@ -27,13 +27,13 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: ${{ inputs.JAVA_VERSION }}
-          distribution: 'temurin'
+          distribution: "temurin"
 
       - name: Build with Gradle
         run: ./gradlew ${{ inputs.BUILD_COMMAND }}
-      
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-            name: Payload
-            path: ${{ inputs.BUILD_DIRECTORY }}
+          name: Payload
+          path: ${{ inputs.BUILD_DIRECTORY }}

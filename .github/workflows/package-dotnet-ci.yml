@@ -1,21 +1,21 @@
-name: Create Java Gradle Docker image
+name: Create .NET Docker image
 
 on:
   workflow_call:
     inputs:
-      JAVA_VERSION:
+      DOTNET_VERSION:
         required: false
         type: string
-        default: "17"
+        default: "8.x"
       BUILD_DIRECTORY:
         required: false
         type: string
-        default: "build/libs"
+        default: app/publish
 
 jobs:
   package-java:
     uses: ./.github/workflows/package-ci.yml
     with:
-      RUNTIME_VERSION: ${{ inputs.JAVA_VERSION }}
+      RUNTIME_VERSION: ${{ inputs.DOTNET_VERSION }}
       BUILD_DIRECTORY: ${{ inputs.BUILD_DIRECTORY }}
-      DOCKERFILE_PATH: workflow-resources/docker/java/Dockerfile.gradle
+      DOCKERFILE_PATH: workflow-resources/docker/dotnet/Dockerfile

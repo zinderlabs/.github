@@ -1,20 +1,20 @@
-name: Build Java Maven project
+name: Build .NET project
 
 on:
   workflow_call:
     inputs:
-      JAVA_VERSION:
+      DOTNET_VERSION:
         required: false
         type: string
-        default: "17"
+        default: "8.x"
       BUILD_COMMAND:
         required: false
         type: string
-        default: "clean package" # if we want to skip tests: -DskipTests
+        default: publish -c Release
       BUILD_DIRECTORY:
         required: false
         type: string
-        default: "target"
+        default: app/publish
 
 jobs:
   build:
@@ -23,15 +23,20 @@ jobs:
       - name: Checkout repository ${{ github.repository }}
         uses: actions/checkout@v4
 
-      - name: Set up JDK ${{ inputs.JAVA_VERSION }}
-        uses: actions/setup-java@v4
+      - name: Setup dotnet ${{ inputs.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v3
         with:
-          java-version: ${{ inputs.JAVA_VERSION }}
-          distribution: "temurin"
-          cache: maven
+          dotnet-version: ${{ inputs.DOTNET_VERSION }}
+          cache: true
 
-      - name: Build with Maven
-        run: mvn ${{ inputs.BUILD_COMMAND }} --batch-mode --update-snapshots
+      - name: Install dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet ${{ inputs.BUILD_COMMAND }} -o ${{ inputs.BUILD_DIRECTORY }}
+
+      - name: Test with the dotnet CLI
+        run: dotnet test
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
