@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup dotnet ${{ inputs.DOTNET_VERSION }}
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ inputs.DOTNET_VERSION }}
           cache: true
