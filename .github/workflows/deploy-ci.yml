@@ -55,8 +55,7 @@ jobs:
           kubectl create secret generic app-secret \
           --namespace=${{ env.PROJECT_NAMESPACE }} \
           --from-literal=APP_SECRET=${{ env.ENV_SECRETS }} \
-          --dry-run=client -o json | \
-          kubectl apply -f - --force
+          --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Create secret hash and source env variables
         run: |
