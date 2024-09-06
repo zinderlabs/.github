@@ -52,16 +52,11 @@ jobs:
 
       - name: Create or update secret in K8s for the application
         run: |
-          echo "
-          apiVersion: v1
-          kind: Secret
-          metadata:
-          name: app-secret
-          namespace: ${{ env.PROJECT_NAMESPACE }}
-          type: Opaque
-          stringData:
-          APP_SECRET: ${{ env.ENV_SECRETS }}
-          " | kubectl apply -f - --force
+          kubectl create secret generic app-secret \
+          --namespace=${{ env.PROJECT_NAMESPACE }} \
+          --from-literal=APP_SECRET=${{ env.ENV_SECRETS }} \
+          --dry-run=client -o json | \
+          kubectl apply -f - --force
 
       - name: Create secret hash and source env variables
         run: |
