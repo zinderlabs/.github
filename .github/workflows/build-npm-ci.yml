@@ -37,5 +37,5 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.BUILD_DIRECTORY }}
+          name: Payload
           path: ${{ inputs.BUILD_DIRECTORY }}

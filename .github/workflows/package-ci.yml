@@ -45,7 +45,7 @@ jobs:
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ inputs.BUILD_DIRECTORY }}
+          name: Payload
           path: ${{ env.BUILD_ARTIFACT_PATH }}
 
       # Cosign is a tool for verifying container images against the
