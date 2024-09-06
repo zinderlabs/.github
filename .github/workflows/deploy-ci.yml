@@ -52,9 +52,9 @@ jobs:
 
       - name: Create or update secret in K8s for the application
         run: |
-          kubectl create secret generic app-secret \
+          echo "${{ env.ENV_SECRETS }}" | kubectl create secret generic app-secret \
           --namespace=${{ env.PROJECT_NAMESPACE }} \
-          --from-literal=APP_SECRET=${{ env.ENV_SECRETS }} \
+          --from-env-file=/dev/stdin \
           --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Create secret hash and source env variables
