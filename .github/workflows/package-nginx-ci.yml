@@ -18,7 +18,7 @@ on:
 
 jobs:
   package-nginx:
-    uses: zinderlabs/.github/.github/workflows/package-ci.yml
+    uses: ./.github/workflows/package-ci.yml
     with:
       RUNTIME_VERSION: ${{ inputs.NGINX_VERSION }}
       BUILD_DIRECTORY: ${{ inputs.BUILD_DIRECTORY }}
