@@ -62,6 +62,11 @@ jobs:
           echo "${{env.ENV_SECRETS}}" >> $GITHUB_ENV
           echo "SECRET_HASH=$(echo -n "${{env.ENV_SECRETS}}" | sha512sum | awk '{print $1}')" >> $GITHUB_ENV
 
+      - name: Debug Helm values
+        run: |
+          echo "Helm values:"
+          cat ${{ env.HELM_VALUES }}
+
       - name: Substitute environment variables in Helm values file
         uses: mshick/fast-envsubst@v1
         with:
