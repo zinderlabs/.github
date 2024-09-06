@@ -84,7 +84,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ${{ github.workspace }}
-          file: ci-central/${{ inputs.DOCKERFILE_PATH }}
+          file: ${{ github.workspace }}/ci-central/${{ inputs.DOCKERFILE_PATH }}
           build-args: |
             RUNTIME_VERSION=${{ inputs.RUNTIME_VERSION }}
             BUILD_PATH=${{ inputs.BUILD_DIRECTORY }}
