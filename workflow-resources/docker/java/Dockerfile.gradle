@@ -1,0 +1,7 @@
+ARG RUNTIME_VERSION
+ARG BUILD_PATH
+
+FROM openjdk:${RUNTIME_VERSION}
+WORKDIR /app
+COPY --from=gradle home/gradle/${BUILD_PATH}/*.jar ./build.jar
+ENTRYPOINT [ "sh", "-c", "java $JAVA_OPTS -jar ./build.jar" ]

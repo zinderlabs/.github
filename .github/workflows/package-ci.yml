@@ -1,0 +1,107 @@
+name: Package Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      RUNTIME_VERSION:
+        required: false
+        type: string
+      BUILD_DIRECTORY:
+        required: false
+        type: string
+      DOCKERFILE_PATH:
+        required: true
+        type: string
+      EXTRA_BUILD_ARGS:
+        required: false
+        type: string
+        default: ""
+
+env:
+  CONTAINER_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
+  BUILD_ARTIFACT_PATH: ${{ github.workspace }}/${{ inputs.BUILD_DIRECTORY }}
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      # Checkout the repository (which repository triggered this workflow)
+      - name: Checkout repository ${{ github.repository }}
+        uses: actions/checkout@v4
+
+      # Checkout the current repository (which we're currently in)
+      - name: Checkout repository workflow resources
+        uses: actions/checkout@v4
+        with:
+          repository: zinderlabs/.github
+          path: ci-central
+
+      # Download build artifact
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.BUILD_DIRECTORY }}
+          path: ${{ env.BUILD_ARTIFACT_PATH }}
+
+      # Cosign is a tool for verifying container images against the
+      # trusted root of trust. It prevents an attacker from
+      # introducing a malicious container image into a system.
+      # More information about Cosign can be found at:
+      # https://github.com/sigstore/cosign
+      - name: Install cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@v3.6.0
+        with:
+          cosign-release: "v2.4.0"
+
+      # Set up BuildKit Docker container to build the Docker image
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Login to GitHub Container Registry
+      - name: Login to GitHub Container Registry ${{env.CONTAINER_REGISTRY}}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Extract metadata (tags, labels) for Docker
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      # Build and push Docker image with Buildx
+      - name: Build and push Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ github.workspace }}
+          file: ${{ github.workspace }}/ci-central/${{ inputs.DOCKERFILE_PATH }}
+          build-args: |
+            RUNTIME_VERSION=${{ inputs.RUNTIME_VERSION }}
+            BUILD_PATH=${{ inputs.BUILD_DIRECTORY }}
+            ${{ inputs.EXTRA_BUILD_ARGS }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Sign the resulting Docker image digest except on PRs.
+      - name: Sign the published Docker image
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-an-intermediate-environment-variable
+          TAGS: ${{ steps.meta.outputs.tags }}
+          DIGEST: ${{ steps.build-and-push.outputs.digest }}
+        # This step uses the identity token to provision an ephemeral certificate
+        # against the sigstore community Fulcio instance.
+        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}

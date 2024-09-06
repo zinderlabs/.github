@@ -1,0 +1,21 @@
+name: Create Java Gradle Docker image
+
+on:
+  workflow_call:
+    inputs:
+      JAVA_VERSION:
+        required: false
+        type: string
+        default: "17"
+      BUILD_DIRECTORY:
+        required: false
+        type: string
+        default: "build/libs"
+
+jobs:
+  package-java:
+    uses: zinderlabs/.github/.github/workflows/package-ci.yml
+    with:
+      RUNTIME_VERSION: ${{ inputs.JAVA_VERSION }}
+      BUILD_DIRECTORY: ${{ inputs.BUILD_DIRECTORY }}
+      DOCKERFILE_PATH: workflow-resources/docker/java/Dockerfile.gradle
