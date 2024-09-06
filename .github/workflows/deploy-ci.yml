@@ -59,8 +59,8 @@ jobs:
 
       - name: Create secret hash and source env variables
         run: |
-          SECRET_HASH=$(echo -n $ENV_SECRET | sha512sum)
-          set -o allexport; source $ENV_SECRET; set +o allexport
+          SECRET_HASH=$(echo -n ${{env.ENV_SECRETS}} | sha512sum)
+          set -o allexport; source ${{env.ENV_SECRETS}}; set +o allexport
 
       - name: Substitute environment variables in Helm values file
         uses: mshick/fast-envsubst@v1
