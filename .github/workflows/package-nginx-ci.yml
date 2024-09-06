@@ -22,6 +22,6 @@ jobs:
     with:
       RUNTIME_VERSION: ${{ inputs.NGINX_VERSION }}
       BUILD_DIRECTORY: ${{ inputs.BUILD_DIRECTORY }}
-      DOCKERFILE_PATH: workflow-resources/docker/nginx/Dockerfile.nginx
+      DOCKERFILE_PATH: 'workflow-resources/docker/nginx/Dockerfile.nginx'
       EXTRA_BUILD_ARGS: |
         NGINX_CONF_PATH=${{ inputs.NGINX_CONFIG_PATH }}
