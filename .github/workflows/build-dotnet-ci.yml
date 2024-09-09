@@ -33,7 +33,7 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet ${{ inputs.BUILD_COMMAND }} -o ${{ inputs.BUILD_DIRECTORY }}
+        run: dotnet ${{ inputs.BUILD_COMMAND }} --property:PublishDir=${{ inputs.BUILD_DIRECTORY }}
 
       - name: Test with the dotnet CLI
         run: dotnet test
