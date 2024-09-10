@@ -18,4 +18,4 @@ jobs:
     with:
       RUNTIME_VERSION: ${{ inputs.NODE_VERSION }}
       BUILD_DIRECTORY: ${{ inputs.BUILD_DIRECTORY }}
-      DOCKERFILE_PATH: "workflow-resources/docker/javascript/Dockerfile.nginx"
+      DOCKERFILE_PATH: "workflow-resources/docker/javascript/Dockerfile.remix"
