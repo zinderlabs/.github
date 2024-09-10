@@ -6,7 +6,7 @@ on:
       DOTNET_VERSION:
         required: false
         type: string
-        default: "8.x"
+        default: "8.0"
       BUILD_DIRECTORY:
         required: false
         type: string
