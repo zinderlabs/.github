@@ -26,9 +26,9 @@ jobs:
       - name: Checkout repository ${{ github.repository }}
         uses: actions/checkout@v4
 
-      - name: Enable corepack
-        if: ${{ !inputs.USE_LEGACY }}
-        run: corepack enable
+      # - name: Enable corepack
+      #   if: ${{ !inputs.USE_LEGACY }}
+      #   run: corepack enable
 
       - name: Using Node version ${{ inputs.NODE_VERSION }}
         uses: actions/setup-node@v4
@@ -38,7 +38,7 @@ jobs:
 
       - name: Use latest Yarn version # if legacy isn't used (image ships with 1.X.X)
         if: ${{ !inputs.USE_LEGACY }}
-        run: yarn set version stable
+        run: yarn set version 4.1.1
 
       - name: Installing node dependencies
         run: yarn install --frozen-lockfile
