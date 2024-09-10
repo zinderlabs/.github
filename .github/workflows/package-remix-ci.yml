@@ -1,0 +1,21 @@
+name: Create Remix Docker image
+
+on:
+  workflow_call:
+    inputs:
+      NODE_VERSION:
+        required: false
+        type: string
+        default: "18"
+      BUILD_DIRECTORY:
+        required: false
+        type: string
+        default: "dist"
+
+jobs:
+  package-nginx:
+    uses: ./.github/workflows/package-ci.yml
+    with:
+      RUNTIME_VERSION: ${{ inputs.NODE_VERSION }}
+      BUILD_DIRECTORY: ${{ inputs.BUILD_DIRECTORY }}
+      DOCKERFILE_PATH: "workflow-resources/docker/javascript/Dockerfile.nginx"

@@ -1,0 +1,13 @@
+ARG RUNTIME_VERSION
+ARG BUILD_PATH
+
+FROM node:${RUNTIME_VERSION}-alpine
+WORKDIR /app
+
+COPY ./node_modules ./node_modules
+COPY ./${BUILD_PATH} ./dist
+COPY ./public ./public
+COPY ./vite.config.ts ./
+COPY ./package.json ./
+
+CMD ["./node_modules/.bin/remix-serve", "dist/server/index.js"]
