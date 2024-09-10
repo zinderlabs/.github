@@ -14,6 +14,10 @@ on:
         required: false
         type: string
         default: "dist"
+      YARN_VERSION:
+        required: false
+        type: string
+        default: "4.1.1"
       USE_LEGACY:
         required: false
         type: boolean
@@ -26,19 +30,17 @@ jobs:
       - name: Checkout repository ${{ github.repository }}
         uses: actions/checkout@v4
 
-      # - name: Enable corepack
-      #   if: ${{ !inputs.USE_LEGACY }}
-      #   run: corepack enable
+      - name: Set non-legacy Yarn version # ubuntu-latest ships with 1.X.X
+        if: ${{ !inputs.USE_LEGACY }}
+        run: |
+          corepack enable
+          yarn set version ${{ inputs.YARN_VERSION }}
 
       - name: Using Node version ${{ inputs.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ inputs.NODE_VERSION }}
           cache: "yarn"
-
-      - name: Use latest Yarn version # if legacy isn't used (image ships with 1.X.X)
-        if: ${{ !inputs.USE_LEGACY }}
-        run: yarn set version 4.1.1
 
       - name: Installing node dependencies
         run: yarn install --frozen-lockfile
