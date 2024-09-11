@@ -2,6 +2,11 @@ name: SonarQube Java Gradle Analysis
 
 on:
   workflow_call:
+    inputs:
+      ALLOW_FAILURE:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   sonarqube:
@@ -39,4 +44,4 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: ./gradlew sonar --info
-        continue-on-error: true
+        continue-on-error: ${{ inputs.ALLOW_FAILURE }}
