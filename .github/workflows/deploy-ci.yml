@@ -10,6 +10,7 @@ env:
   ENV_SECRETS: ${{ github.ref == 'refs/heads/main' && secrets.ENV_SECRETS_PRD || secrets.ENV_SECRETS_DEV }}
   ARGOCD_SERVER: grafana.zinderlabs.com
   ARGOCD_CLI_BINARY: https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+  ARGOCD_AUTH_TOKEN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJnaXRodWItYWN0aW9uOmFwaUtleSIsIm5iZiI6MTcyNjIyODI4MSwiaWF0IjoxNzI2MjI4MjgxLCJqdGkiOiI4ZjFhYzEyYi1iOTkyLTQzZTItYmMyZC03MWI3NGE3NzY2MDIifQ.UrbtRLPHUNleM9MmBC9OqsQ-QmbfqCiMeaOSP6O4oGs
 
 jobs:
   deploy:
@@ -59,14 +60,13 @@ jobs:
           CI_ENVIRONMENT_SLUG=${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
           GITHUB_REPO_URL=https://github.com/${{ github.repository }}
 
-          envsubst < ci-central/argocd/application.yaml | argocd app create --upsert -f -
+          envsubst < ci-central/argocd/argocd-app-manifest.yaml | argocd app create --upsert -f - --server ${{ env.ARGOCD_SERVER }} --auth-token ${{ secrets.ARGOCD_AUTH_TOKEN }} --grpc-web
 
       - name: Trigger ArgoCD sync
         uses: clowdhaus/argo-cd-action/@main
-        env:
-          ARGOCD_AUTH_TOKEN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJnaXRodWItYWN0aW9uOmFwaUtleSIsIm5iZiI6MTcyNjIyODI4MSwiaWF0IjoxNzI2MjI4MjgxLCJqdGkiOiI4ZjFhYzEyYi1iOTkyLTQzZTItYmMyZC03MWI3NGE3NzY2MDIifQ.UrbtRLPHUNleM9MmBC9OqsQ-QmbfqCiMeaOSP6O4oGs
         with:
           command: app sync ${{ github.event.repository.name }}
           options: |
-            --auth-token ${{ secrets.ARGOCD_AUTH_TOKEN }}
             --server ${{ env.ARGOCD_SERVER }}
+            --auth-token ${{ secrets.ARGOCD_AUTH_TOKEN }}
+            --grpc-web
