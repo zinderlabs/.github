@@ -23,7 +23,7 @@ spec:
       template:
         spec:
           imagePullSecrets:
-            - name: gitlab-registry
+            - name: github-registry
           containers:
             - name: database-backup
               image: registry.zinderlabs.com/platform/cicd-central:backup-job

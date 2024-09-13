@@ -12,7 +12,6 @@ deployment:
       memory: "64Mi"
       cpu: "250m"
 
-
 postgres:
   enabled: false
   serviceName: "$POSTGRES_HOST"

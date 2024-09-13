@@ -15,7 +15,7 @@ spec:
     - port: 5432
       name: postgres
   type: ClusterIP
-  selector:
+  selector: 
     tier: "database"
     component: "postgres"
     app: {{ .Values.app.name | quote }}
