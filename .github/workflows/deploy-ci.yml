@@ -33,18 +33,25 @@ jobs:
           done
           echo "SECRET_HASH=$(echo -n "${{env.ENV_SECRETS}}" | sha512sum | awk '{print $1}')" >> $GITHUB_ENV
 
-      - name: Install ArgoCD CLI
-        run: |
-          curl -sSL -o argocd-linux-amd64 ${{ env.ARGOCD_CLI_BINARY }}
-          sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
-          rm argocd-linux-amd64
-
-      - name: Configure ArgoCD CLI
+      - uses: clowdhaus/argo-cd-action/@main
         env:
-          ARGOCD_AUTH_TOKEN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJnaXRodWItYWN0aW9uOmFwaUtleSIsIm5iZiI6MTcyNjIyODI4MSwiaWF0IjoxNzI2MjI4MjgxLCJqdGkiOiI4ZjFhYzEyYi1iOTkyLTQzZTItYmMyZC03MWI3NGE3NzY2MDIifQ.UrbtRLPHUNleM9MmBC9OqsQ-QmbfqCiMeaOSP6O4oGs
-        run: |
-          argocd config set server ${{ env.ARGOCD_SERVER }}
-          argocd login set auth-token $ARGOCD_AUTH_TOKEN
+          # Only required for first step in job where API is called
+          # All subsequent setps in a job will not re-download the CLI
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          command: version
+          options: --client
+
+      # - name: Install ArgoCD CLI
+      #   run: |
+      #     curl -sSL -o argocd-linux-amd64 ${{ env.ARGOCD_CLI_BINARY }}
+      #     sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+      #     rm argocd-linux-amd64
+
+      # - name: Configure ArgoCD CLI
+      #   run: |
+      #     argocd config set server ${{ env.ARGOCD_SERVER }}
+      #     argocd login set auth-token $ARGOCD_AUTH_TOKEN
 
       - name: Apply ArgoCD Application
         run: |
@@ -55,5 +62,11 @@ jobs:
           envsubst < ci-central/argocd/application.yaml | argocd app create --upsert -f -
 
       - name: Trigger ArgoCD sync
-        run: |
-          argocd app sync ${{ github.event.repository.name }}
+        uses: clowdhaus/argo-cd-action/@main
+        env:
+          ARGOCD_AUTH_TOKEN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJnaXRodWItYWN0aW9uOmFwaUtleSIsIm5iZiI6MTcyNjIyODI4MSwiaWF0IjoxNzI2MjI4MjgxLCJqdGkiOiI4ZjFhYzEyYi1iOTkyLTQzZTItYmMyZC03MWI3NGE3NzY2MDIifQ.UrbtRLPHUNleM9MmBC9OqsQ-QmbfqCiMeaOSP6O4oGs
+        with:
+          command: app sync ${{ github.event.repository.name }}
+          options: |
+            --auth-token ${{ secrets.ARGOCD_AUTH_TOKEN }}
+            --server ${{ env.ARGOCD_SERVER }}
