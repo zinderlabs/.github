@@ -9,6 +9,7 @@ env:
   ENV_SECRETS: ${{ github.ref == 'refs/heads/main' && secrets.ENV_SECRETS_PRD || secrets.ENV_SECRETS_DEV }}
   ARGOCD_SERVER: grafana.zinderlabs.com
   ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+  HELM_VALUES: ci-central/workflow-resources/helm/platform-app/values.yaml
 
 jobs:
   deploy:
@@ -16,6 +17,12 @@ jobs:
     steps:
       - name: Checkout repository ${{ github.repository }}
         uses: actions/checkout@v4
+
+      - name: Checkout repository workflow resources
+        uses: actions/checkout@v4
+        with:
+          repository: zinderlabs/.github
+          path: ci-central
 
       - name: Create secret hash and source env variables
         run: |
@@ -46,7 +53,7 @@ jobs:
           command: app create ${{ env.PROJECT_NAME }} --upsert
           options: |
             --repo ${{ github.server_url }}/${{ github.repository }}
-            --path helm
+            --path ${{ env.HELM_VALUES }}
             --dest-server https://kubernetes.default.svc
             --dest-namespace ${{ env.PROJECT_NAME }}
             --revision ${{ github.ref == 'refs/heads/main' && 'main' || 'dev' }}
