@@ -28,7 +28,9 @@ jobs:
 
       - name: Create secret hash and source env variables
         run: |
-          source ${{ env.ENV_SECRETS }}
+          for secret in $(echo -n "${{env.ENV_SECRETS}}"); do
+            echo "${secret}" >> $GITHUB_ENV
+          done
           echo "SECRET_HASH=$(echo -n "${{env.ENV_SECRETS}}" | sha512sum | awk '{print $1}')" >> $GITHUB_ENV
 
       - name: Install ArgoCD CLI
