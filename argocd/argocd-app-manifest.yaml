@@ -21,12 +21,3 @@ spec:
   helm:
     valueFiles:
       - values.yaml
-    parameters:
-      - name: deployment.image
-        value: ${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY}:${GITHUB_SHA}
-      - name: deployment.environment
-        value: ${CI_ENVIRONMENT_SLUG}
-      - name: deployment.namespace
-        value: ${CI_PROJECT_NAME}-${CI_ENVIRONMENT_SLUG}
-      - name: secretHash
-        value: ${SECRET_HASH}

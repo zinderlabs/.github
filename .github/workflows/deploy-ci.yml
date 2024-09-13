@@ -5,12 +5,10 @@ on:
 
 env:
   CONTAINER_REGISTRY: ghcr.io
-  HELM_VALUES: ci-central/workflow-resources/helm/platform-app/values.yaml
   PROJECT_NAME: ${{ github.event.repository.name }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
   ENV_SECRETS: ${{ github.ref == 'refs/heads/main' && secrets.ENV_SECRETS_PRD || secrets.ENV_SECRETS_DEV }}
   ARGOCD_SERVER: grafana.zinderlabs.com
-  ARGOCD_CLI_BINARY: https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-  ARGOCD_AUTH_TOKEN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJnaXRodWItYWN0aW9uOmFwaUtleSIsIm5iZiI6MTcyNjIyODI4MSwiaWF0IjoxNzI2MjI4MjgxLCJqdGkiOiI4ZjFhYzEyYi1iOTkyLTQzZTItYmMyZC03MWI3NGE3NzY2MDIifQ.UrbtRLPHUNleM9MmBC9OqsQ-QmbfqCiMeaOSP6O4oGs
+  ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
 
 jobs:
   deploy:
@@ -18,47 +16,45 @@ jobs:
     steps:
       - name: Checkout repository ${{ github.repository }}
         uses: actions/checkout@v4
-        with:
-          path: main
-
-      - name: Checkout repository workflow resources
-        uses: actions/checkout@v4
-        with:
-          repository: zinderlabs/.github
-          path: ci-central
 
       - name: Create secret hash and source env variables
         run: |
-          for secret in $(echo -n "${{env.ENV_SECRETS}}"); do
-            echo "${secret}" >> $GITHUB_ENV
+          echo "${{env.ENV_SECRETS}}" | while IFS= read -r line || [[ -n "$line" ]]; do
+            echo "$line" >> $GITHUB_ENV
           done
           echo "SECRET_HASH=$(echo -n "${{env.ENV_SECRETS}}" | sha512sum | awk '{print $1}')" >> $GITHUB_ENV
 
-      - uses: clowdhaus/argo-cd-action/@main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup ArgoCD CLI
+        uses: clowdhaus/argo-cd-action/@main
         with:
+          version: latest
           command: version
           options: --client
+
+      - name: Configure ArgoCD CLI
+        run: |
+          argocd repo add ${{ github.server_url }}/${{ github.repository }} --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --upsert
 
       - name: Apply ArgoCD Application
         uses: clowdhaus/argo-cd-action/@main
         env:
-          CI_PROJECT_NAME: ${{ github.event.repository.name }}
           CI_ENVIRONMENT_SLUG: ${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
-          GITHUB_REPO_URL: https://github.com/${{ github.repository }}
         with:
           command: app create ${{ env.PROJECT_NAME }} --upsert
           options: |
-            --repo ${{ env.GITHUB_REPO_URL }}
+            --repo ${{ github.server_url }}/${{ github.repository }}
             --path helm
             --dest-server https://kubernetes.default.svc
             --dest-namespace ${{ env.PROJECT_NAME }}
-            --revision ${{ github.ref == 'refs/heads/main' && 'main' || 'develop' }}
+            --revision ${{ github.ref == 'refs/heads/main' && 'main' || 'dev' }}
             --server ${{ env.ARGOCD_SERVER }}
             --auth-token ${{ env.ARGOCD_AUTH_TOKEN }}
             --grpc-web
             --project platform-apps
+            --helm-set deployment.image=${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}:${{ github.sha }}
+            --helm-set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }}
+            --helm-set deployment.namespace=${{ env.PROJECT_NAME }}
+            --helm-set secretHash=${{ env.SECRET_HASH }}
 
       - name: Trigger ArgoCD sync
         uses: clowdhaus/argo-cd-action/@main
