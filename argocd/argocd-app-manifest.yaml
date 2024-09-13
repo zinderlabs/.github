@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ${CI_PROJECT_NAME}
+  namespace: ${CI_PROJECT_NAME}-${CI_ENVIRONMENT_SLUG}
+spec:
+  project: default
+  source:
+    repoURL: ${GITHUB_REPO_URL}
+    targetRevision: HEAD
+    path: helm
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${CI_PROJECT_NAME}-${CI_ENVIRONMENT_SLUG}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+  helm:
+    valueFiles:
+      - values.yaml
+    parameters:
+      - name: deployment.image
+        value: ${CONTAINER_REGISTRY}/${GITHUB_REPOSITORY}:${GITHUB_SHA}
+      - name: deployment.environment
+        value: ${CI_ENVIRONMENT_SLUG}
+      - name: deployment.namespace
+        value: ${CI_PROJECT_NAME}-${CI_ENVIRONMENT_SLUG}
+      - name: secretHash
+        value: ${SECRET_HASH}
