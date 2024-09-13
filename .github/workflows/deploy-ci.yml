@@ -60,7 +60,7 @@ jobs:
           CI_ENVIRONMENT_SLUG=${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
           GITHUB_REPO_URL=https://github.com/${{ github.repository }}
 
-          envsubst < ci-central/argocd/argocd-app-manifest.yaml | argocd app create --upsert -f - --server ${{ env.ARGOCD_SERVER }} --auth-token ${{ secrets.ARGOCD_AUTH_TOKEN }} --grpc-web
+          envsubst < ci-central/argocd/argocd-app-manifest.yaml | argocd app create --upsert -f - --server ${{ env.ARGOCD_SERVER }} --auth-token ${{ env.ARGOCD_AUTH_TOKEN }} --grpc-web
 
       - name: Trigger ArgoCD sync
         uses: clowdhaus/argo-cd-action/@main
@@ -68,5 +68,5 @@ jobs:
           command: app sync ${{ github.event.repository.name }}
           options: |
             --server ${{ env.ARGOCD_SERVER }}
-            --auth-token ${{ secrets.ARGOCD_AUTH_TOKEN }}
+            --auth-token ${{ env.ARGOCD_AUTH_TOKEN }}
             --grpc-web
