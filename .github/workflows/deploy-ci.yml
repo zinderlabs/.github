@@ -1,4 +1,4 @@
-name: Deploy Platform application to K8s
+name: Deploy Platform application with ArgoCD
 
 on:
   workflow_call:
@@ -8,71 +8,50 @@ env:
   HELM_VALUES: ci-central/workflow-resources/helm/platform-app/values.yaml
   PROJECT_NAME: ${{ github.event.repository.name }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
   ENV_SECRETS: ${{ github.ref == 'refs/heads/main' && secrets.ENV_SECRETS_PRD || secrets.ENV_SECRETS_DEV }}
+  ARGOCD_SERVER: grafana.zinderlabs.com
+  ARGOCD_CLI_BINARY: https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      # Checkout the repository (which repository triggered this workflow)
       - name: Checkout repository ${{ github.repository }}
         uses: actions/checkout@v4
         with:
           path: main
 
-      # Checkout the current repository (which we're currently in)
       - name: Checkout repository workflow resources
         uses: actions/checkout@v4
         with:
           repository: zinderlabs/.github
           path: ci-central
 
-      - name: Set up kubeconfig manually
-        run: |
-          mkdir ${HOME}/.kube
-          echo ${{ secrets.KUBE_CONFIG }} | base64 --decode > ${HOME}/.kube/config
-          chmod 600 ${HOME}/.kube/config
-
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-
-      - name: Create namespace ${{ env.PROJECT_NAME }} in K8s
-        run: kubectl create namespace ${{ env.PROJECT_NAME }} --dry-run=client -o yaml | kubectl apply -f -
-
-      - name: Create secret in K8s for accessing the container registry
-        run: |
-          kubectl create secret docker-registry github-registry \
-          --namespace=${{ env.PROJECT_NAME }} \
-          --docker-server=${{ env.CONTAINER_REGISTRY }} \
-          --docker-username=${{ github.actor }} \
-          --docker-password=${{ secrets.GITHUB_TOKEN }} \
-          --dry-run=client -o yaml | kubectl apply -f -
-
-      - name: Create or update secret in K8s for the application
-        run: |
-          echo "${{ env.ENV_SECRETS }}" | kubectl create secret generic app-secret \
-          --namespace=${{ env.PROJECT_NAME }} \
-          --from-env-file=/dev/stdin \
-          --dry-run=client -o yaml | kubectl apply -f -
-
       - name: Create secret hash and source env variables
         run: |
           source ${{ env.ENV_SECRETS }}
           echo "SECRET_HASH=$(echo -n "${{env.ENV_SECRETS}}" | sha512sum | awk '{print $1}')" >> $GITHUB_ENV
 
-      - name: Substitute environment variables in Helm values file
-        uses: mshick/fast-envsubst@v1
-        with:
-          in-file: ${{ env.HELM_VALUES }}
-          out-file: ${{ github.workspace }}/values-new.yaml
-
-      - name: Debug check new helm values file
+      - name: Install ArgoCD CLI
         run: |
-          cat ${{ github.workspace }}/values-new.yaml || echo "No values file"
+          curl -sSL -o argocd-linux-amd64 ${{ env.ARGOCD_CLI_BINARY }}
+          sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+          rm argocd-linux-amd64
 
-    #   - name: Deploy application using helm
-    #     uses: WyriHaximus/github-action-helm3@v3
-    #     with:
-    #       #TODO
-    #       exec: |
+      - name: Configure ArgoCD CLI
+        env:
+          ARGOCD_AUTH_TOKEN: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcmdvY2QiLCJzdWIiOiJnaXRodWItYWN0aW9uOmFwaUtleSIsIm5iZiI6MTcyNjIyODI4MSwiaWF0IjoxNzI2MjI4MjgxLCJqdGkiOiI4ZjFhYzEyYi1iOTkyLTQzZTItYmMyZC03MWI3NGE3NzY2MDIifQ.UrbtRLPHUNleM9MmBC9OqsQ-QmbfqCiMeaOSP6O4oGs
+        run: |
+          argocd config set server ${{ env.ARGOCD_SERVER }}
+          argocd login set auth-token $ARGOCD_AUTH_TOKEN
+
+      - name: Apply ArgoCD Application
+        run: |
+          CI_PROJECT_NAME=${{ github.event.repository.name }}
+          CI_ENVIRONMENT_SLUG=${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
+          GITHUB_REPO_URL=https://github.com/${{ github.repository }}
+
+          envsubst < ci-central/argocd/application.yaml | argocd app create --upsert -f -
+
+      - name: Trigger ArgoCD sync
+        run: |
+          argocd app sync ${{ github.event.repository.name }}
