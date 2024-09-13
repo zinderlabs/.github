@@ -36,36 +36,34 @@ jobs:
 
       - uses: clowdhaus/argo-cd-action/@main
         env:
-          # Only required for first step in job where API is called
-          # All subsequent setps in a job will not re-download the CLI
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           command: version
           options: --client
 
-      # - name: Install ArgoCD CLI
-      #   run: |
-      #     curl -sSL -o argocd-linux-amd64 ${{ env.ARGOCD_CLI_BINARY }}
-      #     sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
-      #     rm argocd-linux-amd64
-
-      # - name: Configure ArgoCD CLI
-      #   run: |
-      #     argocd config set server ${{ env.ARGOCD_SERVER }}
-      #     argocd login set auth-token $ARGOCD_AUTH_TOKEN
-
       - name: Apply ArgoCD Application
-        run: |
-          CI_PROJECT_NAME=${{ github.event.repository.name }}
-          CI_ENVIRONMENT_SLUG=${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
-          GITHUB_REPO_URL=https://github.com/${{ github.repository }}
-
-          envsubst < ci-central/argocd/argocd-app-manifest.yaml | argocd app create --upsert -f - --server ${{ env.ARGOCD_SERVER }} --auth-token ${{ env.ARGOCD_AUTH_TOKEN }} --grpc-web
+        uses: clowdhaus/argo-cd-action/@main
+        env:
+          CI_PROJECT_NAME: ${{ github.event.repository.name }}
+          CI_ENVIRONMENT_SLUG: ${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
+          GITHUB_REPO_URL: https://github.com/${{ github.repository }}
+        with:
+          command: app create ${{ env.PROJECT_NAME }} --upsert
+          options: |
+            --repo ${{ env.GITHUB_REPO_URL }}
+            --path helm
+            --dest-server https://kubernetes.default.svc
+            --dest-namespace ${{ env.PROJECT_NAME }}
+            --revision ${{ github.ref == 'refs/heads/main' && 'main' || 'develop' }}
+            --server ${{ env.ARGOCD_SERVER }}
+            --auth-token ${{ env.ARGOCD_AUTH_TOKEN }}
+            --grpc-web
+            --project platform-apps
 
       - name: Trigger ArgoCD sync
         uses: clowdhaus/argo-cd-action/@main
         with:
-          command: app sync ${{ github.event.repository.name }}
+          command: app sync ${{ env.PROJECT_NAME }}
           options: |
             --server ${{ env.ARGOCD_SERVER }}
             --auth-token ${{ env.ARGOCD_AUTH_TOKEN }}

@@ -1,10 +1,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ${CI_PROJECT_NAME}
-  namespace: ${CI_PROJECT_NAME}-${CI_ENVIRONMENT_SLUG}
+  name: ${CI_PROJECT_NAME}-${CI_ENVIRONMENT_SLUG}
+  namespace: argocd
 spec:
-  project: default
+  project: platform-apps
   source:
     repoURL: ${GITHUB_REPO_URL}
     targetRevision: HEAD
