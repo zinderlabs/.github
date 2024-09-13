@@ -26,8 +26,11 @@ jobs:
 
       - name: Setup ArgoCD CLI
         uses: clowdhaus/argo-cd-action/@main
+        env:
+          # Only required for first step in job where API is called
+          # All subsequent setps in a job will not re-download the CLI
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          version: latest
           command: version
           options: --client
 
