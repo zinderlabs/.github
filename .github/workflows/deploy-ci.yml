@@ -7,7 +7,6 @@ env:
   CONTAINER_REGISTRY: ghcr.io
   HELM_VALUES: ci-central/workflow-resources/helm/platform-app/values.yaml
   PROJECT_NAME: ${{ github.event.repository.name }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
-  PROJECT_NAMESPACE: ${{ github.event.repository.name }}-${{ github.repository_id }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
   ENV_SECRETS: ${{ github.ref == 'refs/heads/main' && secrets.ENV_SECRETS_PRD || secrets.ENV_SECRETS_DEV }}
 
 jobs:
@@ -38,13 +37,13 @@ jobs:
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
-      - name: Create namespace ${{ env.PROJECT_NAMESPACE }} in K8s
-        run: kubectl create namespace ${{ env.PROJECT_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+      - name: Create namespace ${{ env.PROJECT_NAME }} in K8s
+        run: kubectl create namespace ${{ env.PROJECT_NAME }} --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Create secret in K8s for accessing the container registry
         run: |
           kubectl create secret docker-registry github-registry \
-          --namespace=${{ env.PROJECT_NAMESPACE }} \
+          --namespace=${{ env.PROJECT_NAME }} \
           --docker-server=${{ env.CONTAINER_REGISTRY }} \
           --docker-username=${{ github.actor }} \
           --docker-password=${{ secrets.GITHUB_TOKEN }} \
@@ -53,7 +52,7 @@ jobs:
       - name: Create or update secret in K8s for the application
         run: |
           echo "${{ env.ENV_SECRETS }}" | kubectl create secret generic app-secret \
-          --namespace=${{ env.PROJECT_NAMESPACE }} \
+          --namespace=${{ env.PROJECT_NAME }} \
           --from-env-file=/dev/stdin \
           --dry-run=client -o yaml | kubectl apply -f -
 
