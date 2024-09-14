@@ -9,7 +9,7 @@ env:
   ENV_SECRETS: ${{ github.ref == 'refs/heads/main' && secrets.ENV_SECRETS_PRD || secrets.ENV_SECRETS_DEV }}
   ARGOCD_SERVER: grafana.zinderlabs.com
   ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
-  HELM_CHART_PATH: ${{ github.workspace }}/ci-central/helm/platform-app
+  HELM_CHART_PATH: ci-central/helm/platform-app
   HELM_VALUES_FILE: values.yaml
   KUBERNETES_DEST: https://kubernetes.default.svc
 
