@@ -9,7 +9,7 @@ env:
   ENV_SECRETS: ${{ github.ref == 'refs/heads/main' && secrets.ENV_SECRETS_PRD || secrets.ENV_SECRETS_DEV }}
   ARGOCD_SERVER: grafana.zinderlabs.com
   ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
-  HELM_CHART_URL: ci-central/helm/platform-app/values.yaml
+  HELM_CHART_URL: ${{ github.workspace }}/ci-central/helm/platform-app/values.yaml
 
 jobs:
   deploy:
