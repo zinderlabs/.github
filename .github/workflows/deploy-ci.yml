@@ -9,8 +9,7 @@ env:
   ENV_SECRETS: ${{ github.ref == 'refs/heads/main' && secrets.ENV_SECRETS_PRD || secrets.ENV_SECRETS_DEV }}
   ARGOCD_SERVER: grafana.zinderlabs.com
   ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
-  HELM_CHART_PATH: helm/platform-app
-  HELM_VALUES: helm/platform-app/values.yaml
+  HELM_CHART_URL: ci-central/helm/platform-app/values.yaml
 
 jobs:
   deploy:
@@ -23,7 +22,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: zinderlabs/.github
-          path: .github-resources
+          path: ci-central
 
       - name: Create secret hash and source env variables
         run: |
@@ -46,7 +45,7 @@ jobs:
 
       - name: Configure ArgoCD CLI
         run: |
-          argocd repo add ${{ github.server_url }}/${{ github.server_url }}/zinderlabs/.github --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --upsert
+          argocd repo add ${{ github.server_url }}/${{ github.repository }} --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --upsert --grpc-web
 
       - name: Apply ArgoCD Application
         uses: clowdhaus/argo-cd-action/@main
@@ -55,11 +54,11 @@ jobs:
         with:
           command: app create ${{ env.PROJECT_NAME }} --upsert
           options: |
-            --repo ${{ github.server_url }}/zinderlabs/.github
-            --path ${{ env.HELM_CHART_PATH }}
+            --repo ${{ github.server_url }}/${{ github.repository }}
+            --path .
             --dest-server https://kubernetes.default.svc
             --dest-namespace ${{ env.PROJECT_NAME }}
-            --revision ${{ github.ref == 'refs/heads/main' && 'main' || 'dev' }}
+            --revision ${{ github.ref }}
             --server ${{ env.ARGOCD_SERVER }}
             --auth-token ${{ env.ARGOCD_AUTH_TOKEN }}
             --grpc-web
@@ -68,7 +67,7 @@ jobs:
             --helm-set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }}
             --helm-set deployment.namespace=${{ env.PROJECT_NAME }}
             --helm-set secretHash=${{ env.SECRET_HASH }}
-            --values ${{ env.HELM_VALUES }}
+            --values ${{ env.HELM_CHART_URL }}
 
       - name: Trigger ArgoCD sync
         uses: clowdhaus/argo-cd-action/@main
