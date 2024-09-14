@@ -9,8 +9,8 @@ env:
   ENV_SECRETS: ${{ github.ref == 'refs/heads/main' && secrets.ENV_SECRETS_PRD || secrets.ENV_SECRETS_DEV }}
   ARGOCD_SERVER: grafana.zinderlabs.com
   ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
-  HELM_CHART_PATH: ci-central/helm/platform-app
-  HELM_VALUES: ci-central/helm/platform-app/values.yaml
+  HELM_CHART_PATH: helm/platform-app
+  HELM_VALUES: helm/platform-app/values.yaml
 
 jobs:
   deploy:
@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: zinderlabs/.github
-          path: ci-central
+          path: .github-resources
 
       - name: Create secret hash and source env variables
         run: |
@@ -40,11 +40,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           command: version
-          options: --client
+          options: |
+            --client
+            --grpc-web
 
       - name: Configure ArgoCD CLI
         run: |
-          argocd repo add ${{ github.server_url }}/${{ github.repository }} --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --upsert
+          argocd repo add ${{ github.server_url }}/${{ github.server_url }}/zinderlabs/.github --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --upsert
 
       - name: Apply ArgoCD Application
         uses: clowdhaus/argo-cd-action/@main

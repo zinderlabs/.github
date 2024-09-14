@@ -6,7 +6,7 @@ metadata:
 spec:
   project: platform-apps
   source:
-    repoURL: ${GITHUB_REPO_URL}
+    repoURL: https://github.com/zinderlabs/.github
     targetRevision: HEAD
     path: helm/platform-app
   destination:
