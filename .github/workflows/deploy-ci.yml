@@ -47,6 +47,10 @@ jobs:
         run: |
           argocd repo add ${{ github.server_url }}/${{ github.repository }} --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --upsert --grpc-web
 
+      - name: Debug reading helm chart
+        run: |
+          cat ${{ env.HELM_CHART_URL }} || echo "No chart file"
+
       - name: Apply ArgoCD Application
         uses: clowdhaus/argo-cd-action/@main
         env:
@@ -55,7 +59,7 @@ jobs:
           command: app create ${{ env.PROJECT_NAME }} --upsert
           options: |
             --repo ${{ github.server_url }}/${{ github.repository }}
-            --path .
+            --path ${{ github.workspace }}
             --dest-server https://kubernetes.default.svc
             --dest-namespace ${{ env.PROJECT_NAME }}
             --revision ${{ github.ref }}
