@@ -5,6 +5,7 @@ on:
 
 env:
   CONTAINER_REGISTRY: ghcr.io
+  CI_ENVIRONMENT_SLUG: ${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
   PROJECT_NAME: ${{ github.event.repository.name }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
   ENV_SECRETS: ${{ github.ref == 'refs/heads/main' && secrets.ENV_SECRETS_PRD || secrets.ENV_SECRETS_DEV }}
   ARGOCD_SERVER: grafana.zinderlabs.com
@@ -60,26 +61,22 @@ jobs:
           envsubst < ${{ env.HELM_CHART_PATH }}/${{ env.HELM_VALUES_FILE }} > substituted_values.yaml
 
       - name: Apply ArgoCD Application
-        uses: clowdhaus/argo-cd-action/@main
-        env:
-          CI_ENVIRONMENT_SLUG: ${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
-        with:
-          command: app create ${{ env.PROJECT_NAME }} --upsert
-          options: |
-            --repo ${{ github.server_url }}/${{ github.repository }}.git
-            --path ${{ env.HELM_CHART_PATH }}
-            --dest-server ${{ env.KUBERNETES_DEST }}
-            --dest-namespace ${{ env.PROJECT_NAME }}
-            --revision ${{ github.ref }}
-            --server ${{ env.ARGOCD_SERVER }}
-            --auth-token ${{ env.ARGOCD_AUTH_TOKEN }}
-            --grpc-web
-            --project ${{ github.event.repository.name }}
-            --helm-set deployment.image=${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}:${{ github.ref == 'refs/heads/main' && 'main' || 'dev'}}
-            --helm-set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }}
-            --helm-set deployment.namespace=${{ env.PROJECT_NAME }}
-            --helm-set secretHash=${{ env.SECRET_HASH }}
-            --values ${{ github.workspace }}/substituted_values.yaml
+        run: argocd app create ${{ env.PROJECT_NAME }} --upsert \
+          --loglevel debug \
+          --repo ${{ github.server_url }}/${{ github.repository }}.git \
+          --path ${{ env.HELM_CHART_PATH }} \
+          --dest-server ${{ env.KUBERNETES_DEST }} \
+          --dest-namespace ${{ env.PROJECT_NAME }} \
+          --revision ${{ github.ref }} \
+          --server ${{ env.ARGOCD_SERVER }} \
+          --auth-token ${{ env.ARGOCD_AUTH_TOKEN }} \
+          --grpc-web \
+          --project ${{ github.event.repository.name }} \
+          --helm-set deployment.image=${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}:${{ github.ref == 'refs/heads/main' && 'main' || 'dev'}} \
+          --helm-set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }} \
+          --helm-set deployment.namespace=${{ env.PROJECT_NAME }} \
+          --helm-set secretHash=${{ env.SECRET_HASH }} \
+          --values ${{ github.workspace }}/substituted_values.yaml
 
       - name: Trigger ArgoCD sync
         uses: clowdhaus/argo-cd-action/@main
