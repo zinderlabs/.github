@@ -64,7 +64,7 @@ jobs:
         run: |
           argocd app create ${{ env.PROJECT_NAME }} --upsert \
           --loglevel debug \
-          --repo ${{ github.server_url }}/${{ github.repository }}.git \
+          --repo https://github.com/zinderlabs/.github.git \
           --path ${{ env.HELM_CHART_PATH }} \
           --dest-server ${{ env.KUBERNETES_DEST }} \
           --dest-namespace ${{ env.PROJECT_NAME }} \
