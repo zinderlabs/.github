@@ -61,7 +61,8 @@ jobs:
           envsubst < ${{ env.HELM_CHART_PATH }}/${{ env.HELM_VALUES_FILE }} > substituted_values.yaml
 
       - name: Apply ArgoCD Application
-        run: argocd app create ${{ env.PROJECT_NAME }} --upsert \
+        run: |
+          argocd app create ${{ env.PROJECT_NAME }} --upsert \
           --loglevel debug \
           --repo ${{ github.server_url }}/${{ github.repository }}.git \
           --path ${{ env.HELM_CHART_PATH }} \
