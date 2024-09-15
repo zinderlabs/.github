@@ -74,8 +74,8 @@ jobs:
             --server ${{ env.ARGOCD_SERVER }}
             --auth-token ${{ env.ARGOCD_AUTH_TOKEN }}
             --grpc-web
-            --project platform-apps
-            --helm-set deployment.image=${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}:${{ github.sha }}
+            --project ${{ github.event.repository.name }}
+            --helm-set deployment.image=${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}:${{ github.ref == 'refs/heads/main' && 'main' || 'dev'}}
             --helm-set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }}
             --helm-set deployment.namespace=${{ env.PROJECT_NAME }}
             --helm-set secretHash=${{ env.SECRET_HASH }}
