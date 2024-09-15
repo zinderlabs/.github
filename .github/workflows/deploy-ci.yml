@@ -66,7 +66,7 @@ jobs:
         with:
           command: app create ${{ env.PROJECT_NAME }} --upsert
           options: |
-            --repo ${{ github.server_url }}/${{ github.repository }}
+            --repo ${{ github.server_url }}/${{ github.repository }}.git
             --path ${{ env.HELM_CHART_PATH }}
             --dest-server ${{ env.KUBERNETES_DEST }}
             --dest-namespace ${{ env.PROJECT_NAME }}
