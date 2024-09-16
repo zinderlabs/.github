@@ -54,39 +54,13 @@ jobs:
         run: |
           argocd repo add ${{ github.server_url }}/${{ github.repository }}.git --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --upsert --grpc-web
 
-      - name: Substitute variables and prepare Helm values
+      - name: Substitute variables in values.yaml
         run: |
-          envsubst < ${{ github.workspace}}/${{ env.APP_VALUES }} > substituted_values.yaml
-          echo "SUBSTITUTED_VALUES_PATH=${{ github.workspace }}/substituted_values.yaml" >> $GITHUB_ENV
-
-          echo "Content of substituted_values.yaml:"
-          cat substituted_values.yaml
+          echo "CI_PROJECT_NAME=${{ env.PROJECT_NAME }}" >> $GITHUB_ENV
+          envsubst < ${{ github.workspace }}/${{ env.APP_VALUES }} > substituted_values.yaml
 
       - name: Apply ArgoCD Application
         run: |
-          process_yaml() {
-            local prefix=$1
-            local s=$2
-            local IFS=$'\n'
-            for i in $(echo "$s" | sed -e 's/^[[:space:]]*//' | sed -e 's/:[[:space:]]*/:/g' | sed -e 's/[[:space:]]*#.*$//g' | sed '/^$/d'); do
-              if [[ $i == *:* ]] && [[ ! $i == *:// ]]; then
-                key=$(echo "$i" | cut -d: -f1)
-                value=$(echo "$i" | cut -d: -f2- | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
-                if [[ -z $value ]]; then
-                  process_yaml "${prefix}${key}." "$(echo "$s" | sed -n "/^$key:/,/^[a-zA-Z]/p" | tail -n +2 | sed '/^$/d' | sed 's/^[[:space:]]*//')"
-                else
-                  if [[ $value == "true" || $value == "false" || $value =~ ^[0-9]+$ || $value =~ ^[0-9]+\.[0-9]+$ ]]; then
-                    echo "--helm-set ${prefix}${key}=${value}"
-                  else
-                    echo "--helm-set-string ${prefix}${key}=${value}"
-                  fi
-                fi
-              fi
-            done
-          }
-
-          HELM_SET_COMMANDS=$(process_yaml "" "$SUBSTITUTED_VALUES")
-
           argocd app create ${{ env.PROJECT_NAME }} --upsert \
           --repo https://github.com/zinderlabs/.github.git \
           --path ${{ env.HELM_CHART_PATH }} \
@@ -102,7 +76,7 @@ jobs:
           --helm-set deployment.namespace=${{ env.PROJECT_NAME }} \
           --helm-set secretHash=${{ env.SECRET_HASH }} \
           --helm-set-string app.name=${{ github.event.repository.name }} \
-          $HELM_SET_COMMANDS
+          --values ${{ github.workspace }}/substituted_values.yaml
 
       - name: Trigger ArgoCD sync
         uses: clowdhaus/argo-cd-action/@main
