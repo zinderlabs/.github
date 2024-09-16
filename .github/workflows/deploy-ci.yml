@@ -73,7 +73,8 @@ jobs:
           --set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }} \
           --set deployment.namespace=${{ env.PROJECT_NAME }} \
           --set secretHash=${{ env.SECRET_HASH }} \
-          --values ${{ github.workspace }}/substituted_values.yaml
+          --values ${{ github.workspace }}/substituted_values.yaml \
+          --debug
 
       - name: Apply ArgoCD Application
         run: |
