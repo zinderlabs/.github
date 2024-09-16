@@ -1,41 +1,41 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: { { .Values.app.name } }
-  namespace: { { .Values.deployment.namespace } }
+  name: {{ .Values.app.name }}
+  namespace: {{ .Values.deployment.namespace }}
   labels:
-    tier: { { .Values.app.tier | quote } }
+    tier: {{ .Values.app.tier | quote }}
     component: "app"
-    app: { { .Values.app.name | quote } }
-    env: { { .Values.deployment.environment | quote } }
+    app: {{ .Values.app.name | quote }}
+    env: {{ .Values.deployment.environment | quote }}
   annotations:
-    app.github.com/app: { { .Values.deployment.pathSlug | quote } }
-    app.github.com/env: { { .Values.deployment.environment | quote } }
+    app.github.com/app: {{ .Values.deployment.pathSlug | quote }}
+    app.github.com/env: {{ .Values.deployment.environment | quote }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      tier: { { .Values.app.tier | quote } }
+      tier: {{ .Values.app.tier | quote }}
       component: "app"
-      app: { { .Values.app.name | quote } }
-      env: { { .Values.deployment.environment | quote } }
+      app: {{ .Values.app.name | quote }}
+      env: {{ .Values.deployment.environment | quote }}
   template:
     metadata:
       labels:
-        tier: { { .Values.app.tier | quote } }
+        tier: {{ .Values.app.tier | quote }}
         component: "app"
-        app: { { .Values.app.name | quote } }
-        env: { { .Values.deployment.environment | quote } }
+        app: {{ .Values.app.name | quote }}
+        env: {{ .Values.deployment.environment | quote }}
       annotations:
-        checksum/secret: { { .Values.secretHash | quote } }
-        app.github.com/app: { { .Values.deployment.pathSlug | quote } }
-        app.github.com/env: { { .Values.deployment.environment | quote } }
+        checksum/secret: {{ .Values.secretHash | quote }}
+        app.github.com/app: {{ .Values.deployment.pathSlug | quote }}
+        app.github.com/env: {{ .Values.deployment.environment | quote }}
     spec:
       imagePullSecrets:
         - name: github-registry
       containers:
-        - name: { { .Values.app.name } }
-          image: { { .Values.deployment.image } }
+        - name: {{ .Values.app.name }}
+          image: {{ .Values.deployment.image }}
           imagePullPolicy: Always
           envFrom:
             - secretRef:
@@ -45,28 +45,8 @@ spec:
             - containerPort: 80
           resources:
             requests:
-              memory:
-                {
-                  {
-                    .Values.deployment.resources.requests.memory | default "32Mi" | quote,
-                  },
-                }
-              cpu:
-                {
-                  {
-                    .Values.deployment.resources.requests.cpu | default "150m" | quote,
-                  },
-                }
+              memory: {{ .Values.deployment.resources.requests.memory | default "32Mi" | quote }}
+              cpu: {{ .Values.deployment.resources.requests.cpu | default "150m" | quote }}
             limits:
-              memory:
-                {
-                  {
-                    .Values.deployment.resources.limits.memory | default "64Mi" | quote,
-                  },
-                }
-              cpu:
-                {
-                  {
-                    .Values.deployment.resources.limits.cpu | default "250m" | quote,
-                  },
-                }
+              memory: {{ .Values.deployment.resources.limits.memory | default "64Mi" | quote }}
+              cpu: {{ .Values.deployment.resources.limits.cpu | default "250m" | quote }}

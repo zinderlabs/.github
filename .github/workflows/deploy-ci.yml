@@ -62,6 +62,19 @@ jobs:
           envsubst < ${{ github.workspace }}/${{ env.APP_VALUES }} > substituted_values.yaml
           cat substituted_values.yaml
 
+      - name: Lint Helm chart
+        run: |
+          helm lint ${{ env.HELM_CHART_PATH }}
+
+      - name: Debug Helm templates
+        run: |
+          helm template ${{ env.HELM_CHART_PATH }} \
+          --set deployment.image=${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}:${{ github.ref == 'refs/heads/main' && 'main' || 'dev'}} \
+          --set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }} \
+          --set deployment.namespace=${{ env.PROJECT_NAME }} \
+          --set secretHash=${{ env.SECRET_HASH }} \
+          --values ${{ github.workspace }}/substituted_values.yaml
+
       - name: Apply ArgoCD Application
         run: |
           argocd app create ${{ env.PROJECT_NAME }} --upsert \
