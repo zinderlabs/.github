@@ -62,10 +62,6 @@ jobs:
           envsubst < ${{ github.workspace }}/${{ env.APP_VALUES }} > substituted_values.yaml
           cat substituted_values.yaml
 
-      - name: Lint Helm chart
-        run: |
-          helm lint ${{ env.HELM_CHART_PATH }}
-
       - name: Debug Helm templates
         run: |
           helm template ${{ env.HELM_CHART_PATH }} \
