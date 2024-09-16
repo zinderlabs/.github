@@ -79,7 +79,8 @@ jobs:
           --helm-set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }} \
           --helm-set deployment.namespace=${{ env.PROJECT_NAME }} \
           --helm-set secretHash=${{ env.SECRET_HASH }} \
-          --helm-set-string "values=$SUBSTITUTED_VALUES"
+          --helm-set-string "values=$SUBSTITUTED_VALUES" \
+          --debug
 
       - name: Trigger ArgoCD sync
         uses: clowdhaus/argo-cd-action/@main
