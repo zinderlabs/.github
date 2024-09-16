@@ -64,13 +64,32 @@ jobs:
 
       - name: Apply ArgoCD Application
         run: |
+          process_yaml() {
+            local prefix=$1
+            local s=$2
+            local IFS=$'\n'
+            for i in $(echo "$s" | sed -e 's/^[[:space:]]*//' | sed -e 's/:[[:space:]]*/:/g' | sed -e 's/[[:space:]]*#.*$//g' | sed '/^$/d'); do
+              if [[ $i == *:* ]] && [[ ! $i == *:// ]]; then
+                key=$(echo "$i" | cut -d: -f1)
+                value=$(echo "$i" | cut -d: -f2-)
+                if [[ -z $value ]]; then
+                  process_yaml "${prefix}${key}." "$(echo "$s" | sed -n "/^$key:/,/^[a-zA-Z]/p" | tail -n +2 | sed '/^$/d' | sed 's/^[[:space:]]*//')"
+                else
+                  echo "--helm-set-string ${prefix}${key}=${value}"
+                fi
+              fi
+            done
+          }
+
+          HELM_SET_COMMANDS=$(process_yaml "" "$SUBSTITUTED_VALUES")
+
           argocd app create ${{ env.PROJECT_NAME }} --upsert \
           --loglevel debug \
           --repo https://github.com/zinderlabs/.github.git \
           --path ${{ env.HELM_CHART_PATH }} \
           --dest-server ${{ env.KUBERNETES_DEST }} \
           --dest-namespace ${{ env.PROJECT_NAME }} \
-          --revision ${{ github.ref }} \
+          --revision main \
           --server ${{ env.ARGOCD_SERVER }} \
           --auth-token ${{ env.ARGOCD_AUTH_TOKEN }} \
           --grpc-web \
@@ -79,8 +98,7 @@ jobs:
           --helm-set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }} \
           --helm-set deployment.namespace=${{ env.PROJECT_NAME }} \
           --helm-set secretHash=${{ env.SECRET_HASH }} \
-          --helm-set-string "values=$SUBSTITUTED_VALUES" \
-          --debug
+          $HELM_SET_COMMANDS
 
       - name: Trigger ArgoCD sync
         uses: clowdhaus/argo-cd-action/@main
