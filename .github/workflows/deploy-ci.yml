@@ -50,10 +50,12 @@ jobs:
           options: |
             --client
             --grpc-web
+            --loglevel debug 
+            --logformat json
 
       - name: Configure ArgoCD CLI
         run: |
-          argocd repo add ${{ github.server_url }}/${{ github.repository }}.git --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --upsert --grpc-web
+          argocd repo add ${{ github.server_url }}/${{ github.repository }}.git --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --upsert --grpc-web --loglevel debug --logformat json
 
       - name: Substitute variables in values.yaml
         run: |
@@ -63,6 +65,8 @@ jobs:
       - name: Apply ArgoCD Application
         run: |
           argocd app create ${{ env.PROJECT_NAME }} --upsert \
+          --loglevel debug \
+          --logformat json \
           --repo https://github.com/zinderlabs/.github.git \
           --path ${{ env.HELM_CHART_PATH }} \
           --dest-server ${{ env.KUBERNETES_DEST }} \
