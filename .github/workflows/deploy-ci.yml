@@ -39,6 +39,7 @@ jobs:
             echo "$line" >> $GITHUB_ENV
           done
           echo "SECRET_HASH=$(echo -n "${{env.ENV_SECRETS}}" | sha512sum | awk '{print $1}')" >> $GITHUB_ENV
+          echo "CI_PROJECT_NAME=${{ env.PROJECT_NAME }}" >> $GITHUB_ENV
 
       - name: Setup ArgoCD CLI
         uses: clowdhaus/argo-cd-action/@main
@@ -56,8 +57,8 @@ jobs:
 
       - name: Substitute variables in values.yaml
         run: |
-          echo "CI_PROJECT_NAME=${{ env.PROJECT_NAME }}" >> $GITHUB_ENV
           envsubst < ${{ github.workspace }}/${{ env.APP_VALUES }} > substituted_values.yaml
+          cat substituted_values.yaml
 
       - name: Apply ArgoCD Application
         run: |
@@ -75,8 +76,7 @@ jobs:
           --helm-set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }} \
           --helm-set deployment.namespace=${{ env.PROJECT_NAME }} \
           --helm-set secretHash=${{ env.SECRET_HASH }} \
-          --helm-set-string app.name=${{ github.event.repository.name }} \
-          --values ${{ github.workspace }}/substituted_values.yaml
+          --values-literal-file ${{ github.workspace }}/substituted_values.yaml
 
       - name: Trigger ArgoCD sync
         uses: clowdhaus/argo-cd-action/@main
