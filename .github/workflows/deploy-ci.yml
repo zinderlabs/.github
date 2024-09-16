@@ -59,7 +59,8 @@ jobs:
       - name: Substitute variables and prepare Helm values
         run: |
           envsubst < ${{ env.HELM_CHART_PATH }}/${{ env.HELM_VALUES_FILE }} > substituted_values.yaml
-          echo "SUBSTITUTED_VALUES_PATH=${{ github.workspace }}/substituted_values.yaml" >> $GITHUB_ENV
+          ESCAPED_VALUES=$(awk '{printf "%s\\n", $0}' substituted_values.yaml | sed 's/"/\\"/g')
+          echo "SUBSTITUTED_VALUES=$ESCAPED_VALUES" >> $GITHUB_ENV
 
       - name: Apply ArgoCD Application
         run: |
@@ -78,7 +79,7 @@ jobs:
           --helm-set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }} \
           --helm-set deployment.namespace=${{ env.PROJECT_NAME }} \
           --helm-set secretHash=${{ env.SECRET_HASH }} \
-          --values-literal-file ${{ env.SUBSTITUTED_VALUES_PATH }}
+          --helm-set-string "values=${{ env.SUBSTITUTED_VALUES }}"
 
       - name: Trigger ArgoCD sync
         uses: clowdhaus/argo-cd-action/@main
