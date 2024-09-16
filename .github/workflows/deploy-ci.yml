@@ -56,9 +56,12 @@ jobs:
         run: |
           argocd repo add ${{ github.server_url }}/${{ github.repository }}.git --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --upsert --grpc-web
 
-      - name: Substitute variables in values.yaml
+      - name: Substitute variables and prepare Helm values
         run: |
-          envsubst < ${{ env.HELM_CHART_PATH }}/${{ env.HELM_VALUES_FILE }} > substituted_values.yaml
+          SUBSTITUTED_VALUES=$(envsubst < ${{ env.HELM_CHART_PATH }}/${{ env.HELM_VALUES_FILE }})
+          echo "HELM_VALUES<<EOF" >> $GITHUB_ENV
+          echo "$SUBSTITUTED_VALUES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Apply ArgoCD Application
         run: |
@@ -76,8 +79,8 @@ jobs:
           --helm-set deployment.image=${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}:${{ github.ref == 'refs/heads/main' && 'main' || 'dev'}} \
           --helm-set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }} \
           --helm-set deployment.namespace=${{ env.PROJECT_NAME }} \
-          --helm-set secretHash=${{ env.SECRET_HASH }}
-          --values-literal-file ${{ github.workspace }}/substituted_values.yaml
+          --helm-set secretHash=${{ env.SECRET_HASH }} \
+          --helm-set-string "values=$HELM_VALUES"
 
       - name: Trigger ArgoCD sync
         uses: clowdhaus/argo-cd-action/@main
