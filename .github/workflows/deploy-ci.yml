@@ -66,7 +66,7 @@ jobs:
         env:
           APP_SECRETS: ${{ secrets.APP_SECRETS }}
         run: |
-          SECRETS_JSON=$(echo "$APP_SECRETS" | sed 's/^/"/; s/$/"/; s/=/": "/g' | sed 's/$/,/; 1s/^/{/; $s/,$/}/')
+          HELM_SET_ARGS=$(echo "$APP_SECRETS" | sed -e 's/^/--helm-set appSecrets./' -e 's/=/=/' | tr '\n' ' ')
           argocd app create ${{ env.PROJECT_NAME }} --upsert \
           --loglevel debug \
           --logformat json \
@@ -86,7 +86,7 @@ jobs:
           --helm-set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }} \
           --helm-set deployment.namespace=${{ env.NAMESPACE }} \
           --helm-set secretHash=${{ env.SECRET_HASH }} \
-          --helm-set-json appSecrets="$SECRETS_JSON" \
+          $HELM_SET_ARGS \
           --values-literal-file ${{ github.workspace }}/substituted_values.yaml \
           --sync-policy ${{ env.SYNC_POLICY }} \
           --sync-option CreateNamespace=true
