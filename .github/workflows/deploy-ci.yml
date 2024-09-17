@@ -63,14 +63,6 @@ jobs:
           envsubst < ${{ github.workspace }}/${{ env.APP_VALUES }} > substituted_values.yaml
           cat substituted_values.yaml
 
-      - name: Create github registry secret
-        run: |
-          kubectl create secret docker-registry github-registry-secret \
-          --docker-server=${{ env.CONTAINER_REGISTRY }} \
-          --docker-username=${{ github.actor }} \
-          --docker-password=${{ secrets.GITHUB_TOKEN }} \
-          -n ${{ env.NAMESPACE }}
-
       - name: Apply ArgoCD Application
         run: |
           argocd app create ${{ env.PROJECT_NAME }} --upsert \
@@ -85,6 +77,9 @@ jobs:
           --auth-token ${{ env.ARGOCD_AUTH_TOKEN }} \
           --grpc-web \
           --project ${{ env.PROJECT }} \
+          --helm-set imageCredentials.registry=${{ env.CONTAINER_REGISTRY }} \
+          --helm-set imageCredentials.username=${{ github.actor }} \
+          --helm-set imageCredentials.password=${{ secrets.GITHUB_TOKEN }} \
           --helm-set deployment.pathSlug=${{ github.event.repository.name }} \
           --helm-set deployment.image=${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}:${{ github.ref == 'refs/heads/main' && 'main' || 'dev'}} \
           --helm-set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }} \

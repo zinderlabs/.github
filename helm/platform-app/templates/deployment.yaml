@@ -32,7 +32,7 @@ spec:
         app.github.com/env: {{ .Values.deployment.environment | quote }}
     spec:
       imagePullSecrets:
-        - name: github-registry
+        - name: github-registry-secret
       containers:
         - name: {{ .Values.app.name }}
           image: {{ .Values.deployment.image }}
