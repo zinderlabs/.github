@@ -66,7 +66,11 @@ jobs:
         env:
           APP_SECRETS: ${{ secrets.APP_SECRETS }}
         run: |
-          HELM_SET_ARGS=$(echo "$APP_SECRETS" | sed -e 's/^/--helm-set appSecrets./' -e 's/=/=/' | tr '\n' ' ')
+          HELM_SET_ARGS=""
+          while IFS='=' read -r key value; do
+            HELM_SET_ARGS="$HELM_SET_ARGS --helm-set appSecrets.$key=$value"
+          done <<< "$APP_SECRETS"
+
           argocd app create ${{ env.PROJECT_NAME }} --upsert \
           --loglevel debug \
           --logformat json \
