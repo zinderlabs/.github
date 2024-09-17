@@ -16,7 +16,7 @@ env:
   KUBERNETES_DEST: https://kubernetes.default.svc
   MANIFEST_REPO: git@github.com:zinderlabs/.github.git
   PROJECT: platform-apps
-  SYNC_POLICY: ${{ github.ref == 'refs/heads/main' && 'manual' || 'automated' }}
+  SYNC_POLICY: ${{ github.ref == 'refs/heads/main' && 'none' || 'automated' }}
 
 jobs:
   deploy:
