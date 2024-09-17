@@ -66,6 +66,6 @@ Create image pull secret
 */}}
 {{- define "imagePullSecret" }}
 {{- with .Values.imageCredentials }}
-{{- printf "{\"auths\":{\"%s\":{\"auth\":\"%s\"}}}" .registry (printf ":%s" .token | b64enc) | b64enc }}
+{{- printf "{\"auths\":{\"%s\":{\"auth\":\"%s\"}}}" .registry (printf "%s" .token | b64enc) | b64enc }}
 {{- end }}
 {{- end }}
