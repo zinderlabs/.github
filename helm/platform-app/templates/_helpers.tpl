@@ -69,3 +69,12 @@ Create image pull secret
 {{- printf "{\"auths\":{\"%s\":{\"auth\":\"%s\"}}}" .registry (printf "%s" .token | b64enc) | b64enc }}
 {{- end }}
 {{- end }}
+
+{{/*
+Create app env variables secret
+*/}}
+{{- define "appSecretData" -}}
+{{- range $key, $value := .Values.appSecrets }}
+{{ $key }}: {{ $value | b64enc }}
+{{- end }}
+{{- end }}

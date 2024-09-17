@@ -36,11 +36,8 @@ jobs:
           mkdir -p ${{ env.HELM_CHART_PATH }}
           cp -R ci-central/helm/platform-app/* ${{ env.HELM_CHART_PATH }}/
 
-      - name: Create secret hash and source env variables
+      - name: Create secret hash
         run: |
-          echo "${{env.ENV_SECRETS}}" | while IFS= read -r line || [[ -n "$line" ]]; do
-            echo "$line" >> $GITHUB_ENV
-          done
           echo "SECRET_HASH=$(echo -n "${{env.ENV_SECRETS}}" | sha512sum | awk '{print $1}')" >> $GITHUB_ENV
           echo "CI_PROJECT_NAME=${{ env.PROJECT_NAME }}" >> $GITHUB_ENV
 
@@ -86,6 +83,7 @@ jobs:
           --helm-set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }} \
           --helm-set deployment.namespace=${{ env.NAMESPACE }} \
           --helm-set secretHash=${{ env.SECRET_HASH }} \
+          --helm-set-string appSecrets=${{ env.ENV_SECRETS }} \
           --values-literal-file ${{ github.workspace }}/substituted_values.yaml \
           --sync-policy ${{ env.SYNC_POLICY }} \
           --sync-option CreateNamespace=true
