@@ -14,7 +14,9 @@ env:
   ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
   HELM_CHART_PATH: helm/platform-app
   KUBERNETES_DEST: https://kubernetes.default.svc
+  MANIFEST_REPO: git@github.com:zinderlabs/.github.git
   PROJECT: platform-apps
+  SYNC_POLICY: ${{ github.ref == 'refs/heads/main' && 'manual' || 'automated' }}
 
 jobs:
   deploy:
@@ -68,7 +70,7 @@ jobs:
           argocd app create ${{ env.PROJECT_NAME }} --upsert \
           --loglevel debug \
           --logformat json \
-          --repo git@github.com:zinderlabs/.github.git \
+          --repo ${{ env.MANIFEST_REPO }} \
           --path ${{ env.HELM_CHART_PATH }} \
           --dest-server ${{ env.KUBERNETES_DEST }} \
           --dest-namespace ${{ env.NAMESPACE }} \
@@ -85,13 +87,15 @@ jobs:
           --helm-set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }} \
           --helm-set deployment.namespace=${{ env.NAMESPACE }} \
           --helm-set secretHash=${{ env.SECRET_HASH }} \
-          --values-literal-file ${{ github.workspace }}/substituted_values.yaml
+          --values-literal-file ${{ github.workspace }}/substituted_values.yaml \
+          --sync-policy ${{ env.SYNC_POLICY }} \
+          --sync-option CreateNamespace=true
 
-      - name: Trigger ArgoCD sync
-        uses: clowdhaus/argo-cd-action/@main
-        with:
-          command: app sync ${{ env.PROJECT_NAME }}
-          options: |
-            --server ${{ env.ARGOCD_SERVER }}
-            --auth-token ${{ env.ARGOCD_AUTH_TOKEN }}
-            --grpc-web
+      # - name: Trigger ArgoCD sync
+      #   run: |
+      #     argocd app sync ${{ env.PROJECT_NAME }} \
+      #     --loglevel debug \
+      #     --logformat json \
+      #     --server ${{ env.ARGOCD_SERVER }} \
+      #     --auth-token ${{ env.ARGOCD_AUTH_TOKEN }} \
+      #     --grpc-web
