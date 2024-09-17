@@ -35,16 +35,17 @@ spec:
         - name: github-registry-secret
       initContainers:
         - name: debug-image-pull
-          image: curlimages/curl:latest
+          image: alpine:3.14
           command: 
             - sh
             - -c
             - |
+              apk add --no-cache curl jq
               echo "Debugging image pull..."
               echo "Checking registry credentials:"
               cat /var/run/secrets/kubernetes.io/dockerconfigjson/.dockerconfigjson
               echo "Attempting to authenticate and list repository:"
-              REGISTRY_AUTH=$(jq -r '.auths["ghcr.io"].auth' /var/run/secrets/kubernetes.io/dockerconfigjson/.dockerconfigjson | base64 -d)
+              REGISTRY_AUTH=$(jq -r '.auths["ghcr.io"].auth' /var/run/secrets/kubernetes.io/dockerconfigjson/.dockerconfigjson)
               curl -v -H "Authorization: Basic $REGISTRY_AUTH" https://ghcr.io/v2/zinderlabs/platform-shell-frontend/tags/list
               echo "Checking network connectivity to ghcr.io:"
               curl -v https://ghcr.io
