@@ -80,8 +80,7 @@ jobs:
           --grpc-web \
           --project ${{ env.PROJECT }} \
           --helm-set imageCredentials.registry=${{ env.CONTAINER_REGISTRY }} \
-          --helm-set imageCredentials.username=${{ github.actor }} \
-          --helm-set imageCredentials.password=${{ secrets.GITHUB_TOKEN }} \
+          --helm-set imageCredentials.token=${{ secrets.CONTAINER_REGISTRY_TOKEN }} \
           --helm-set deployment.pathSlug=${{ github.event.repository.name }} \
           --helm-set deployment.image=${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}:${{ github.ref == 'refs/heads/main' && 'main' || 'dev'}} \
           --helm-set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }} \
