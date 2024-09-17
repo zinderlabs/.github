@@ -65,6 +65,7 @@ jobs:
       - name: Debug Helm templates
         run: |
           helm template ${{ env.HELM_CHART_PATH }} \
+          --set deployment.pathSlug=${{ github.event.repository.name }} \
           --set deployment.image=${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}:${{ github.ref == 'refs/heads/main' && 'main' || 'dev'}} \
           --set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }} \
           --set deployment.namespace=${{ env.PROJECT_NAME }} \
@@ -86,6 +87,7 @@ jobs:
           --auth-token ${{ env.ARGOCD_AUTH_TOKEN }} \
           --grpc-web \
           --project ${{ github.event.repository.name }} \
+          --helm-set deployment.pathSlug=${{ github.event.repository.name }} \
           --helm-set deployment.image=${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}:${{ github.ref == 'refs/heads/main' && 'main' || 'dev'}} \
           --helm-set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }} \
           --helm-set deployment.namespace=${{ env.PROJECT_NAME }} \
