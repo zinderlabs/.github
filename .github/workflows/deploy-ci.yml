@@ -53,7 +53,7 @@ jobs:
           options: |
             --client
             --grpc-web
-            --loglevel debug 
+            --loglevel debug
             --logformat json
 
       - name: Configure ArgoCD CLI

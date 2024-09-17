@@ -21,7 +21,7 @@ spec:
       env: {{ .Values.deployment.environment | quote }}
   template:
     metadata:
-      labels:
+      labels: 
         tier: {{ .Values.app.tier | quote }}
         component: "app"
         app: {{ .Values.app.name | quote }}
@@ -33,6 +33,24 @@ spec:
     spec:
       imagePullSecrets:
         - name: github-registry-secret
+      initContainers:
+        - name: debug-image-pull
+          image: curlimages/curl:latest
+          command: 
+            - sh
+            - -c
+            - |
+              echo "Debugging image pull..."
+              echo "Checking registry credentials:"
+              cat /var/run/secrets/kubernetes.io/dockerconfigjson/.dockerconfigjson
+              echo "Attempting to authenticate and list repository:"
+              REGISTRY_AUTH=$(jq -r '.auths["ghcr.io"].auth' /var/run/secrets/kubernetes.io/dockerconfigjson/.dockerconfigjson | base64 -d)
+              curl -v -H "Authorization: Basic $REGISTRY_AUTH" https://ghcr.io/v2/zinderlabs/platform-shell-frontend/tags/list
+              echo "Checking network connectivity to ghcr.io:"
+              curl -v https://ghcr.io
+          volumeMounts:
+            - name: docker-secret
+              mountPath: /var/run/secrets/kubernetes.io/dockerconfigjson
       containers:
         - name: {{ .Values.app.name }}
           image: {{ .Values.deployment.image }}
@@ -41,6 +59,9 @@ spec:
             - secretRef:
                 name: app-secret
                 optional: true
+          env:
+            - name: DEBUG_IMAGE_PULL
+              value: "true"
           ports:
             - containerPort: 80
           resources:
@@ -50,3 +71,7 @@ spec:
             limits:
               memory: {{ .Values.deployment.resources.limits.memory | default "64Mi" | quote }}
               cpu: {{ .Values.deployment.resources.limits.cpu | default "250m" | quote }}
+      volumes:
+        - name: docker-secret
+          secret:
+            secretName: github-registry-secret
