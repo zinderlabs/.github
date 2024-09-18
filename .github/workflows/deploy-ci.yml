@@ -38,7 +38,12 @@ jobs:
 
       - name: Create secret hash
         run: |
-          echo "SECRET_HASH=$(echo -n "${{env.ENV_SECRETS}}" | sha512sum | awk '{print $1}')" >> $GITHUB_ENV
+          if [ -n "${{ env.ENV_SECRETS }}" ]; then
+            SECRET_HASH=$(echo -n "${{ env.ENV_SECRETS }}" | sha512sum | awk '{print $1}')
+          else
+            SECRET_HASH="nosecrets"
+          fi
+          echo "SECRET_HASH=$SECRET_HASH" >> $GITHUB_ENV
           echo "CI_PROJECT_NAME=${{ env.PROJECT_NAME }}" >> $GITHUB_ENV
 
       - name: Setup ArgoCD CLI
