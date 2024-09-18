@@ -20,7 +20,7 @@ on:
 env:
   CONTAINER_REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
-  BUILD_ARTIFACT_PATH: ${{ github.workspace }}/${{ inputs.BUILD_DIRECTORY }}
+  BUILD_ARTIFACT_PATH: ${{ github.workspace }}/build-artifact
 
 jobs:
   package:
@@ -47,14 +47,6 @@ jobs:
         with:
           name: Payload
           path: ${{ env.BUILD_ARTIFACT_PATH }}
-
-      - name: Debug build artifact
-        run: |
-          cd ${{ github.workspace }}
-          echo "Contents of build directory:"
-          ls -la ${{ inputs.BUILD_DIRECTORY }}
-          echo "\nContents of nginx config:"
-          cat ci-central/workflow-resources/docker/javascript/nginx.conf
 
       # Cosign is a tool for verifying container images against the
       # trusted root of trust. It prevents an attacker from
