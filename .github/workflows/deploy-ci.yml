@@ -71,9 +71,6 @@ jobs:
             HELM_SET_ARGS="$HELM_SET_ARGS --helm-set appSecrets.$key=$value"
           done <<< "$APP_SECRETS"
 
-          echo "Generated HELM_SET_ARGS (redacted):"
-          echo "$HELM_SET_ARGS" | sed 's/=.*/=REDACTED/'
-
           argocd app create ${{ env.PROJECT_NAME }} --upsert \
           --loglevel debug \
           --logformat json \
