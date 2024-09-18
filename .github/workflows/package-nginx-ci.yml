@@ -14,7 +14,7 @@ on:
       NGINX_CONFIG_PATH:
         required: false
         type: string
-        default: "workflow-resources/docker/javascript/nginx.conf"
+        default: "ci-central/workflow-resources/docker/javascript/nginx.conf"
 
 jobs:
   package-nginx:

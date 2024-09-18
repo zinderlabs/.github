@@ -91,7 +91,7 @@ jobs:
           file: ${{ github.workspace }}/ci-central/${{ inputs.DOCKERFILE_PATH }}
           build-args: |
             RUNTIME_VERSION=${{ inputs.RUNTIME_VERSION }}
-            BUILD_PATH=${{ inputs.BUILD_DIRECTORY }}
+            BUILD_PATH=${{ env.BUILD_ARTIFACT_PATH }}
             ${{ inputs.EXTRA_BUILD_ARGS }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
