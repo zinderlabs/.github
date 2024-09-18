@@ -67,13 +67,6 @@ jobs:
           envsubst < ${{ github.workspace }}/${{ env.APP_VALUES }} > substituted_values.yaml
           cat substituted_values.yaml
 
-      - name: Debug Information
-        run: |
-          echo "Branch name: ${GITHUB_REF#refs/heads/}"
-          echo "Manifest repo: ${{ env.MANIFEST_REPO }}"
-          echo "Helm chart path: ${{ env.HELM_CHART_PATH }}"
-          echo "Image tag: ${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}:${GITHUB_REF#refs/heads/}"
-
       - name: Apply ArgoCD Application
         env:
           APP_SECRETS: ${{ env.ENV_SECRETS }}

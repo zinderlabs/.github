@@ -11,6 +11,9 @@ metadata:
   annotations:
     app.github.com/app: {{ .Values.deployment.pathSlug | quote }}
     app.github.com/env: {{ .Values.deployment.environment | quote }}
+    app.github.com/commit: {{ .Values.deployment.projectCommit | quote }}
+    app.github.com/commit-short: {{ .Values.deployment.projectCommitShort | quote }}
+    app.github.com/repo-url: {{ .Values.deployment.projectRepoUrl | quote }}
 spec:
   replicas: 1
   selector:
@@ -30,6 +33,9 @@ spec:
         checksum/secret: {{ .Values.secretHash | quote }}
         app.github.com/app: {{ .Values.deployment.pathSlug | quote }}
         app.github.com/env: {{ .Values.deployment.environment | quote }}
+        app.github.com/commit: {{ .Values.deployment.projectCommit | quote }}
+        app.github.com/commit-short: {{ .Values.deployment.projectCommitShort | quote }}
+        app.github.com/repo-url: {{ .Values.deployment.projectRepoUrl | quote }}
     spec:
       imagePullSecrets:
         - name: ghcr-login-secret
