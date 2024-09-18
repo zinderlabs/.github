@@ -20,7 +20,7 @@ on:
 env:
   CONTAINER_REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
-  BUILD_ARTIFACT_PATH: ${{ github.workspace }}/build-artifact
+  BUILD_ARTIFACT_DIR_NAME: build-artifact
 
 jobs:
   package:
@@ -46,7 +46,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: Payload
-          path: ${{ env.BUILD_ARTIFACT_PATH }}
+          path: ${{github.workspace}}/${{ env.BUILD_ARTIFACT_DIR_NAME }}
 
       # Cosign is a tool for verifying container images against the
       # trusted root of trust. It prevents an attacker from
@@ -84,10 +84,10 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ${{ github.workspace }}
-          file: ${{ github.workspace }}/ci-central/${{ inputs.DOCKERFILE_PATH }}
+          file: ci-central/${{ inputs.DOCKERFILE_PATH }}
           build-args: |
             RUNTIME_VERSION=${{ inputs.RUNTIME_VERSION }}
-            BUILD_PATH=${{ env.BUILD_ARTIFACT_PATH }}
+            BUILD_PATH=${{ env.BUILD_ARTIFACT_DIR_NAME }}
             ${{ inputs.EXTRA_BUILD_ARGS }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
