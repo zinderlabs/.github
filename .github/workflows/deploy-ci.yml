@@ -74,6 +74,15 @@ jobs:
           echo "Helm chart path: ${{ env.HELM_CHART_PATH }}"
           echo "Image tag: ${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}:${GITHUB_REF#refs/heads/}"
 
+      - name: Determine revision
+        id: get_revision
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "revision=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+          else
+            echo "revision=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          fi
+
       - name: Apply ArgoCD Application
         env:
           APP_SECRETS: ${{ env.ENV_SECRETS }}
@@ -83,8 +92,6 @@ jobs:
             HELM_SET_ARGS="$HELM_SET_ARGS --helm-set appSecrets.$key=$value"
           done <<< "$APP_SECRETS"
 
-          BRANCH_NAME=${GITHUB_REF#refs/heads/}
-
           argocd app create ${{ env.PROJECT_NAME }} --upsert \
           --loglevel debug \
           --logformat json \
@@ -92,7 +99,7 @@ jobs:
           --path ${{ env.HELM_CHART_PATH }} \
           --dest-server ${{ env.KUBERNETES_DEST }} \
           --dest-namespace ${{ env.NAMESPACE }} \
-          --revision ${BRANCH_NAME} \
+          --revision ${{ steps.get_revision.outputs.revision }} \
           --server ${{ env.ARGOCD_SERVER }} \
           --auth-token ${{ env.ARGOCD_AUTH_TOKEN }} \
           --grpc-web \
