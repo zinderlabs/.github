@@ -5,9 +5,9 @@ on:
 
 env:
   CONTAINER_REGISTRY: ghcr.io
-  CI_ENVIRONMENT_SLUG: ${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
-  NAMESPACE: ${{ github.event.repository.name }}
-  PROJECT_NAME: ${{ github.event.repository.name }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
+  ENVIRONMENT_SLUG: ${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
+  PROJECT_NAME: ${{ github.event.repository.name }}
+  PROJECT_NAME_WITH_ENV: ${{ github.event.repository.name }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
   ENV_SECRETS: ${{ github.ref == 'refs/heads/main' && secrets.ENV_SECRETS_PRD || secrets.ENV_SECRETS_DEV }}
   APP_VALUES: ${{ github.ref == 'refs/heads/main' && 'values.prd.yaml' || 'values.dev.yaml' }}
   ARGOCD_SERVER: grafana.zinderlabs.com
@@ -83,13 +83,13 @@ jobs:
             HELM_SET_ARGS="$HELM_SET_ARGS --helm-set appSecrets.$key=$value"
           done <<< "$APP_SECRETS"
 
-          argocd app create ${{ env.PROJECT_NAME }} --upsert \
+          argocd app create ${{ env.PROJECT_NAME_WITH_ENV }} --upsert \
           --loglevel debug \
           --logformat json \
           --repo ${{ env.MANIFEST_REPO }} \
           --path ${{ env.HELM_CHART_PATH }} \
           --dest-server ${{ env.KUBERNETES_DEST }} \
-          --dest-namespace ${{ env.NAMESPACE }} \
+          --dest-namespace ${{ env.PROJECT_NAME_WITH_ENV }} \
           --revision main \
           --server ${{ env.ARGOCD_SERVER }} \
           --auth-token ${{ env.ARGOCD_AUTH_TOKEN }} \
@@ -99,8 +99,8 @@ jobs:
           --helm-set imageCredentials.token=${{ secrets.CONTAINER_REGISTRY_TOKEN }} \
           --helm-set deployment.pathSlug=${{ github.event.repository.name }} \
           --helm-set deployment.image=${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}:${{ github.ref == 'refs/heads/main' && 'main' || 'dev'}} \
-          --helm-set deployment.environment=${{ env.CI_ENVIRONMENT_SLUG }} \
-          --helm-set deployment.namespace=${{ env.NAMESPACE }} \
+          --helm-set deployment.environment=${{ env.ENVIRONMENT_SLUG }} \
+          --helm-set deployment.namespace=${{ env.PROJECT_NAME_WITH_ENV }} \
           --helm-set secretHash=${{ env.SECRET_HASH }} \
           $HELM_SET_ARGS \
           --values-literal-file ${{ github.workspace }}/substituted_values.yaml \
