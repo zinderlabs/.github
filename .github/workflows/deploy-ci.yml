@@ -67,6 +67,10 @@ jobs:
           envsubst < ${{ github.workspace }}/${{ env.APP_VALUES }} > substituted_values.yaml
           cat substituted_values.yaml
 
+      - name: Get current commit SHA
+        id: get_sha
+        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
       - name: Apply ArgoCD Application
         env:
           APP_SECRETS: ${{ env.ENV_SECRETS }}
@@ -83,7 +87,7 @@ jobs:
           --path ${{ env.HELM_CHART_PATH }} \
           --dest-server ${{ env.KUBERNETES_DEST }} \
           --dest-namespace ${{ env.NAMESPACE }} \
-          --revision ${{ github.ref == 'refs/heads/main' && 'main' || 'dev'}} \
+          --revision ${{ steps.get_sha.outputs.sha }} \
           --server ${{ env.ARGOCD_SERVER }} \
           --auth-token ${{ env.ARGOCD_AUTH_TOKEN }} \
           --grpc-web \
