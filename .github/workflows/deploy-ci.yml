@@ -64,7 +64,7 @@ jobs:
 
       - name: Apply ArgoCD Application
         env:
-          APP_SECRETS: ${{ secrets.APP_SECRETS }}
+          APP_SECRETS: ${{ env.ENV_SECRETS }}
         run: |
           HELM_SET_ARGS=""
           while IFS='=' read -r key value; do
