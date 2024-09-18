@@ -67,6 +67,13 @@ jobs:
           envsubst < ${{ github.workspace }}/${{ env.APP_VALUES }} > substituted_values.yaml
           cat substituted_values.yaml
 
+      - name: Get project commit info
+        id: project_commit
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "repo_url=${{ github.server_url }}/${{ github.repository }}" >> $GITHUB_OUTPUT
+
       - name: Apply ArgoCD Application
         env:
           APP_SECRETS: ${{ env.ENV_SECRETS }}
@@ -94,6 +101,9 @@ jobs:
           --helm-set deployment.image=${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}:${{ github.ref == 'refs/heads/main' && 'main' || 'dev'}} \
           --helm-set deployment.environment=${{ env.ENVIRONMENT_SLUG }} \
           --helm-set deployment.namespace=${{ env.PROJECT_NAME_WITH_ENV }} \
+          --helm-set deployment.projectCommit=${{ steps.project_commit.outputs.sha }} \
+          --helm-set deployment.projectCommitShort=${{ steps.project_commit.outputs.short_sha }} \
+          --helm-set deployment.projectRepoUrl=${{ steps.project_commit.outputs.repo_url }} \
           --helm-set secretHash=${{ env.SECRET_HASH }} \
           $HELM_SET_ARGS \
           --values-literal-file ${{ github.workspace }}/substituted_values.yaml \
