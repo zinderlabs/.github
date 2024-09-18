@@ -80,6 +80,8 @@ jobs:
             HELM_SET_ARGS="$HELM_SET_ARGS --helm-set appSecrets.$key=$value"
           done <<< "$APP_SECRETS"
 
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+
           argocd app create ${{ env.PROJECT_NAME }} --upsert \
           --loglevel debug \
           --logformat json \
@@ -87,7 +89,7 @@ jobs:
           --path ${{ env.HELM_CHART_PATH }} \
           --dest-server ${{ env.KUBERNETES_DEST }} \
           --dest-namespace ${{ env.NAMESPACE }} \
-          --revision ${{ steps.get_sha.outputs.sha }} \
+          --revision ${BRANCH_NAME} \
           --server ${{ env.ARGOCD_SERVER }} \
           --auth-token ${{ env.ARGOCD_AUTH_TOKEN }} \
           --grpc-web \
