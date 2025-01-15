@@ -10,7 +10,7 @@ env:
   PROJECT_NAME_WITH_ENV: ${{ github.event.repository.name }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
   ENV_SECRETS: ${{ github.ref == 'refs/heads/main' && secrets.ENV_SECRETS_PRD || secrets.ENV_SECRETS_DEV }}
   APP_VALUES: ${{ github.ref == 'refs/heads/main' && 'values.prd.yaml' || 'values.dev.yaml' }}
-  ARGOCD_SERVER: grafana.zinderlabs.com
+  ARGOCD_SERVER: argocd.zinderlabs.com
   ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
   HELM_CHART_PATH: helm/platform-app
   KUBERNETES_DEST: https://kubernetes.default.svc
