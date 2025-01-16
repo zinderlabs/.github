@@ -116,6 +116,6 @@ jobs:
           $HELM_SET_ARGS \
           --values-literal-file ${{ github.workspace }}/substituted_values.yaml \
           --sync-policy ${{ env.SYNC_POLICY }} \
-          --sync-option CreateNamespace=true 
-          --sync-option Force=true
+          --sync-option CreateNamespace=true \
+          --sync-option Force=true \
           --sync-option Replace=true
