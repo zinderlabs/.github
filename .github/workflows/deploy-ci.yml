@@ -60,7 +60,7 @@ jobs:
 
       - name: Configure ArgoCD CLI
         run: |
-          argocd repo add git@github.com:${{ github.repository }}.git --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --upsert --grpc-web --loglevel debug --logformat json
+          argocd repo add ${{ github.server_url }}/${{ github.repository }}.git --username ${{ github.actor }} --password ${{ secrets.GITHUB_TOKEN }} --upsert --grpc-web --loglevel debug --logformat json
 
       - name: Substitute variables in values.yaml
         run: |
