@@ -11,7 +11,7 @@ env:
   ENV_SECRETS: ${{ github.ref == 'refs/heads/main' && secrets.ENV_SECRETS_PRD || secrets.ENV_SECRETS_DEV }}
   APP_VALUES: ${{ github.ref == 'refs/heads/main' && 'values.prd.yaml' || 'values.dev.yaml' }}
   ARGOCD_SERVER: argocd.zinderlabs.com
-  ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}
+  ORG_ARGOCD_AUTH_TOKEN: ${{ secrets.ORG_ARGOCD_AUTH_TOKEN }}
   HELM_CHART_PATH: helm/platform-app
   KUBERNETES_DEST: https://kubernetes.default.svc
   MANIFEST_REPO: git@github.com:zinderlabs/.github.git
@@ -61,7 +61,7 @@ jobs:
       - name: Configure ArgoCD CLI
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/argocd-key
+          echo "${{ secrets.ORG_SSH_PRIVATE_KEY }}" > ~/.ssh/argocd-key
           chmod 600 ~/.ssh/argocd-key
           argocd repo add git@github.com:${{ github.repository }}.git \
             --ssh-private-key-path ~/.ssh/argocd-key \
@@ -100,11 +100,11 @@ jobs:
           --dest-namespace ${{ env.PROJECT_NAME_WITH_ENV }} \
           --revision main \
           --server ${{ env.ARGOCD_SERVER }} \
-          --auth-token ${{ env.ARGOCD_AUTH_TOKEN }} \
+          --auth-token ${{ env.ORG_ARGOCD_AUTH_TOKEN }} \
           --grpc-web \
           --project ${{ env.ARGOCD_PROJECT }} \
           --helm-set imageCredentials.registry=${{ env.CONTAINER_REGISTRY }} \
-          --helm-set imageCredentials.token=${{ secrets.CONTAINER_REGISTRY_TOKEN }} \
+          --helm-set imageCredentials.token=${{ secrets.ORG_CONTAINER_REGISTRY_TOKEN }} \
           --helm-set deployment.pathSlug=${{ github.event.repository.name }} \
           --helm-set deployment.image=${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}:${{ github.ref == 'refs/heads/main' && 'main' || 'dev'}} \
           --helm-set deployment.environment=${{ env.ENVIRONMENT_SLUG }} \
