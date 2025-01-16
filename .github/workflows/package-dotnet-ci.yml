@@ -18,4 +18,4 @@ jobs:
     with:
       RUNTIME_VERSION: ${{ inputs.DOTNET_VERSION }}
       BUILD_DIRECTORY: ${{ inputs.BUILD_DIRECTORY }}
-      DOCKERFILE_PATH: workflow-resources/docker/dotnet/Dockerfile
+      DOCKERFILE_PATH: ci-central/workflow-resources/docker/dotnet/Dockerfile
