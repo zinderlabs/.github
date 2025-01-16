@@ -60,10 +60,11 @@ jobs:
 
       - name: Configure ArgoCD CLI
         run: |
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /home/runner/.ssh/argocd-key
-          chmod 600 /home/runner/.ssh/argocd-key
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/argocd-key
+          chmod 600 ~/.ssh/argocd-key
           argocd repo add git@github.com:${{ github.repository }}.git \
-            --ssh-private-key-path /home/runner/.ssh/argocd-key \
+            --ssh-private-key-path ~/.ssh/argocd-key \
             --upsert \
             --grpc-web \
             --loglevel debug \
