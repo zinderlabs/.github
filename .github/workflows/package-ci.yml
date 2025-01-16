@@ -19,7 +19,7 @@ on:
 
 env:
   CONTAINER_REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
+  IMAGE_NAME: ${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'staging'}}
   BUILD_ARTIFACT_DIR_NAME: build-artifact
 
 jobs:

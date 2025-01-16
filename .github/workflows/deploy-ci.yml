@@ -5,11 +5,11 @@ on:
 
 env:
   CONTAINER_REGISTRY: ghcr.io
-  ENVIRONMENT_SLUG: ${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
+  ENVIRONMENT_SLUG: ${{ github.ref == 'refs/heads/main' && 'prd' || 'staging'}}
   PROJECT_NAME: ${{ github.event.repository.name }}
-  PROJECT_NAME_WITH_ENV: ${{ github.event.repository.name }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}
+  PROJECT_NAME_WITH_ENV: ${{ github.event.repository.name }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'staging'}}
   ENV_SECRETS: ${{ github.ref == 'refs/heads/main' && secrets.ENV_SECRETS_PRD || secrets.ENV_SECRETS_DEV }}
-  APP_VALUES: ${{ github.ref == 'refs/heads/main' && 'values.prd.yaml' || 'values.dev.yaml' }}
+  APP_VALUES: ${{ github.ref == 'refs/heads/main' && 'values.prd.yaml' || 'values.staging.yaml' }}
   ARGOCD_SERVER: argocd.zinderlabs.com
   ORG_ARGOCD_AUTH_TOKEN: ${{ secrets.ORG_ARGOCD_AUTH_TOKEN }}
   HELM_CHART_PATH: helm/platform-app
@@ -35,6 +35,17 @@ jobs:
         run: |
           mkdir -p ${{ env.HELM_CHART_PATH }}
           cp -R ci-central/helm/platform-app/* ${{ env.HELM_CHART_PATH }}/
+
+      - name: Merge and Filter Secrets/Variables
+        env:
+          ALL_SECRETS: ${{ toJSON(secrets) }}
+          ALL_VARS: ${{ toJSON(vars) }}
+        run: |
+          merged=""
+          filtered_secrets=$(echo "$ALL_SECRETS" | jq -r 'to_entries | map(select(.key | startswith("ORG_") | not)) | .[] | "\(.key)=\(.value)"')
+          filtered_vars=$(echo "$ALL_VARS" | jq -r 'to_entries | map(select(.key | startswith("ORG_") | not)) | .[] | "\(.key)=\(.value)"')
+          merged="$filtered_secrets"$'\n'"$filtered_vars"
+          echo "APP_ENV=$merged" >> $GITHUB_ENV
 
       - name: Create secret hash
         run: |
@@ -84,7 +95,7 @@ jobs:
 
       - name: Apply ArgoCD Application
         env:
-          APP_SECRETS: ${{ env.ENV_SECRETS }}
+          APP_SECRETS: ${{ env.APP_ENV }}
         run: |
           HELM_SET_ARGS=""
           while IFS='=' read -r key value; do
@@ -106,7 +117,7 @@ jobs:
           --helm-set imageCredentials.registry=${{ env.CONTAINER_REGISTRY }} \
           --helm-set imageCredentials.token=${{ secrets.ORG_CONTAINER_REGISTRY_TOKEN }} \
           --helm-set deployment.pathSlug=${{ github.event.repository.name }} \
-          --helm-set deployment.image=${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'dev'}}:${{ github.ref == 'refs/heads/main' && 'main' || 'dev'}} \
+          --helm-set deployment.image=${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'staging'}}:${{ github.ref == 'refs/heads/main' && 'main' || 'staging'}} \
           --helm-set deployment.environment=${{ env.ENVIRONMENT_SLUG }} \
           --helm-set deployment.namespace=${{ env.PROJECT_NAME_WITH_ENV }} \
           --helm-set deployment.projectCommit=${{ steps.project_commit.outputs.sha }} \
