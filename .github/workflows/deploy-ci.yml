@@ -15,7 +15,7 @@ env:
   HELM_CHART_PATH: helm/platform-app
   KUBERNETES_DEST: https://kubernetes.default.svc
   MANIFEST_REPO: git@github.com:zinderlabs/.github.git
-  PROJECT: platform-apps
+  ARGOCD_PROJECT: platform-apps
   SYNC_POLICY: ${{ github.ref == 'refs/heads/main' && 'none' || 'automated' }}
 
 jobs:
@@ -102,7 +102,8 @@ jobs:
           --server ${{ env.ARGOCD_SERVER }} \
           --auth-token ${{ env.ARGOCD_AUTH_TOKEN }} \
           --grpc-web \
-          --project ${{ env.PROJECT }} \
+          --project ${{ env.ARGOCD_PROJECT }} \
+          --helm-set app.name=${{ env.PROJECT_NAME_WITH_ENV }} \
           --helm-set imageCredentials.registry=${{ env.CONTAINER_REGISTRY }} \
           --helm-set imageCredentials.token=${{ secrets.CONTAINER_REGISTRY_TOKEN }} \
           --helm-set deployment.pathSlug=${{ github.event.repository.name }} \
