@@ -28,6 +28,9 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew ${{ inputs.BUILD_COMMAND }}
 
+      - name: Remove plain jar
+        run: rm -f ${{ inputs.BUILD_DIRECTORY }}/*-plain.jar
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
