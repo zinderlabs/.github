@@ -58,15 +58,12 @@ jobs:
             --loglevel debug
             --logformat json
 
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
       - name: Configure ArgoCD CLI
         run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /home/runner/.ssh/argocd-key
+          chmod 600 /home/runner/.ssh/argocd-key
           argocd repo add git@github.com:${{ github.repository }}.git \
-            --ssh-private-key-path ~/.ssh/id_rsa \
+            --ssh-private-key-path /home/runner/.ssh/argocd-key \
             --upsert \
             --grpc-web \
             --loglevel debug \
