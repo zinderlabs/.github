@@ -105,8 +105,15 @@ jobs:
         env:
           ALL_SECRETS: ${{ toJSON(secrets) }}
           ALL_VARS: ${{ toJSON(vars) }}
-          MERGED_SECRETS: ${{ env.MERGED_SECRETS }}
         run: |
+          MERGED_SECRETS=""
+          if [ -n "$ALL_SECRETS" ]; then
+            MERGED_SECRETS="$MERGED_SECRETS"$'\n'"$(echo "$ALL_SECRETS" | jq -r 'to_entries | map(select((.key | startswith("ORG_") | not) and (.key != "github_token"))) | .[] | "\(.key)=\(.value)"')"
+          fi
+          if [ -n "$ALL_VARS" ]; then
+            MERGED_SECRETS="$MERGED_SECRETS"$'\n'"$(echo "$ALL_VARS" | jq -r 'to_entries | map(select(.key | startswith("ORG_") | not)) | .[] | "\(.key)=\(.value)"')"
+          fi
+
           HELM_SET_ARGS=""
           while IFS='=' read -r key value; do
                     if [ -n "$key" ]; then
