@@ -37,21 +37,21 @@ jobs:
           mkdir -p ${{ env.HELM_CHART_PATH }}
           cp -R ci-central/helm/platform-app/* ${{ env.HELM_CHART_PATH }}/
 
-      - name: Merge and Filter Secrets/Variables
+      - name: Create secret hash
         env:
           ALL_SECRETS: ${{ toJSON(secrets) }}
           ALL_VARS: ${{ toJSON(vars) }}
         run: |
-          merged=""
-          filtered_secrets=$(echo "$ALL_SECRETS" | jq -r 'to_entries | map(select((.key | startswith("ORG_") | not) and (.key != "SSH_PRIVATE_KEY"))) | .[] | "\(.key)=\(.value)"')
-          filtered_vars=$(echo "$ALL_VARS" | jq -r 'to_entries | map(select(.key | startswith("ORG_") | not)) | .[] | "\(.key)=\(.value)"')
-          merged="$filtered_secrets"$'\n'"$filtered_vars"
-          echo "APP_ENV=$merged" >> $GITHUB_ENV
+          MERGED_SECRETS=""
+          if [ -n "${{ env.ALL_SECRETS}}"]; then
+            MERGED_SECRETS="$MERGED_SECRETS"$'\n'"$(echo "$ALL_SECRETS" | jq -r 'to_entries | map(select((.key | startswith("ORG_") | not) and (.key != "SSH_PRIVATE_KEY"))) and (.key != "github_token"))) | .[] | "\(.key)=\(.value)"')"
+          fi
+          if [ -n "${{ env.ALL_VARS }}"]; then
+            MERGED_SECRETS="$MERGED_SECRETS"$'\n'"$(echo "$ALL_VARS" | jq -r 'to_entries | map(select(.key | startswith("ORG_") | not)) | .[] | "\(.key)=\(.value)"')"
+          fi
 
-      - name: Create secret hash
-        run: |
-          if [ -n "${{ env.ENV_SECRETS }}" ]; then
-            SECRET_HASH=$(echo -n "${{ env.ENV_SECRETS }}" | sha512sum | awk '{print $1}')
+          if [ -n "$MERGED_SECRETS" ]; then
+            SECRET_HASH=$(echo -n "$MERGED_SECRETS" | sha512sum | awk '{print $1}')
           else
             SECRET_HASH="nosecrets"
           fi
@@ -96,12 +96,21 @@ jobs:
 
       - name: Apply ArgoCD Application
         env:
-          APP_SECRETS: ${{ env.APP_ENV }}
+          ALL_SECRETS: ${{ toJSON(secrets) }}
+          ALL_VARS: ${{ toJSON(vars) }}
         run: |
+          MERGED_SECRETS=""
+          if [ -n "${{ env.ALL_SECRETS}}"]; then
+            MERGED_SECRETS="$MERGED_SECRETS"$'\n'"$(echo "$ALL_SECRETS" | jq -r 'to_entries | map(select((.key | startswith("ORG_") | not) and (.key != "SSH_PRIVATE_KEY"))) and (.key != "github_token"))) | .[] | "\(.key)=\(.value)"')"
+          fi
+          if [ -n "${{ env.ALL_VARS }}"]; then
+            MERGED_SECRETS="$MERGED_SECRETS"$'\n'"$(echo "$ALL_VARS" | jq -r 'to_entries | map(select(.key | startswith("ORG_") | not)) | .[] | "\(.key)=\(.value)"')"
+          fi
+
           HELM_SET_ARGS=""
           while IFS='=' read -r key value; do
             HELM_SET_ARGS="$HELM_SET_ARGS --helm-set appSecrets.$key=$value"
-          done <<< "$APP_SECRETS"
+          done <<< "$MERGED_SECRETS"
 
           argocd app create ${{ env.PROJECT_NAME_WITH_ENV }} --upsert \
           --loglevel debug \
