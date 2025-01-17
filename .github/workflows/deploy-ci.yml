@@ -44,14 +44,21 @@ jobs:
         run: |
           MERGED_SECRETS=""
           if [ -n "$ALL_SECRETS" ]; then
-            MERGED_SECRETS="$MERGED_SECRETS"$'\n'"$(echo "$ALL_SECRETS" | jq -r 'to_entries | map(select((.key | startswith("ORG_") | not) and (.key != "SSH_PRIVATE_KEY") and (.key != "github_token"))) | .[] | "\(.key)=\(.value)"')"
+            MERGED_SECRETS="$MERGED_SECRETS"$'\n'"$(echo "$ALL_SECRETS" | jq -r 'to_entries | map(select((.key | startswith("ORG_") | not) and (.key != "github_token"))) | .[] | "\(.key)=\(.value)"')"
           fi
           if [ -n "$ALL_VARS" ]; then
             MERGED_SECRETS="$MERGED_SECRETS"$'\n'"$(echo "$ALL_VARS" | jq -r 'to_entries | map(select(.key | startswith("ORG_") | not)) | .[] | "\(.key)=\(.value)"')"
           fi
 
           if [ -n "$MERGED_SECRETS" ]; then
+            echo "MERGED_SECRETS=$MERGED_SECRETS" >> $GITHUB_ENV
             SECRET_HASH=$(echo -n "$MERGED_SECRETS" | sha512sum | awk '{print $1}')
+
+            while IFS='=' read -r key value; do
+              if [ -n "$key" ]; then
+                echo "$key=$value" >> $GITHUB_ENV
+              fi
+            done <<< "$MERGED_SECRETS"
           else
             SECRET_HASH="nosecrets"
           fi
@@ -99,17 +106,11 @@ jobs:
           ALL_SECRETS: ${{ toJSON(secrets) }}
           ALL_VARS: ${{ toJSON(vars) }}
         run: |
-          MERGED_SECRETS=""
-          if [ -n "$ALL_SECRETS" ]; then
-            MERGED_SECRETS="$MERGED_SECRETS"$'\n'"$(echo "$ALL_SECRETS" | jq -r 'to_entries | map(select((.key | startswith("ORG_") | not) and (.key != "SSH_PRIVATE_KEY") and (.key != "github_token"))) | .[] | "\(.key)=\(.value)"')"
-          fi
-          if [ -n "$ALL_VARS" ]; then
-            MERGED_SECRETS="$MERGED_SECRETS"$'\n'"$(echo "$ALL_VARS" | jq -r 'to_entries | map(select(.key | startswith("ORG_") | not)) | .[] | "\(.key)=\(.value)"')"
-          fi
-
           HELM_SET_ARGS=""
           while IFS='=' read -r key value; do
-            HELM_SET_ARGS="$HELM_SET_ARGS --helm-set appSecrets.$key=$value"
+                    if [ -n "$key" ]; then
+                              HELM_SET_ARGS="$HELM_SET_ARGS --helm-set appSecrets.$key=$value"
+                    fi
           done <<< "$MERGED_SECRETS"
 
           argocd app create ${{ env.PROJECT_NAME_WITH_ENV }} --upsert \
