@@ -70,17 +70,17 @@ jobs:
             --loglevel debug
             --logformat json
 
-      - name: Configure ArgoCD CLI
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/argocd-key
-          chmod 600 ~/.ssh/argocd-key
-          argocd repo add git@github.com:${{ github.repository }}.git \
-            --ssh-private-key-path ~/.ssh/argocd-key \
-            --upsert \
-            --grpc-web \
-            --loglevel debug \
-            --logformat json
+      # - name: Configure ArgoCD CLI
+      #   run: |
+      #     mkdir -p ~/.ssh
+      #     echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/argocd-key
+      #     chmod 600 ~/.ssh/argocd-key
+      #     argocd repo add git@github.com:${{ github.repository }}.git \
+      #       --ssh-private-key-path ~/.ssh/argocd-key \
+      #       --upsert \
+      #       --grpc-web \
+      #       --loglevel debug \
+      #       --logformat json
 
       - name: Substitute variables in values.yaml
         run: |
