@@ -105,6 +105,7 @@ jobs:
         env:
           ALL_SECRETS: ${{ toJSON(secrets) }}
           ALL_VARS: ${{ toJSON(vars) }}
+          MERGED_SECRETS: ${{ env.MERGED_SECRETS }}
         run: |
           HELM_SET_ARGS=""
           while IFS='=' read -r key value; do
