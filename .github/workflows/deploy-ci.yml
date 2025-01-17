@@ -43,7 +43,7 @@ jobs:
           ALL_VARS: ${{ toJSON(vars) }}
         run: |
           merged=""
-          filtered_secrets=$(echo "$ALL_SECRETS" | jq -r 'to_entries | map(select(.key | startswith("ORG_") | not)) | .[] | "\(.key)=\(.value)"')
+          filtered_secrets=$(echo "$ALL_SECRETS" | jq -r 'to_entries | map(select(.key | startswith("ORG_") | not and .key != "SSH_PRIVATE_KEY")) | .[] | "\(.key)=\(.value)"')
           filtered_vars=$(echo "$ALL_VARS" | jq -r 'to_entries | map(select(.key | startswith("ORG_") | not)) | .[] | "\(.key)=\(.value)"')
           merged="$filtered_secrets"$'\n'"$filtered_vars"
           echo "APP_ENV=$merged" >> $GITHUB_ENV
