@@ -102,12 +102,12 @@ jobs:
 
       - name: Trigger ArgoCD Deployment
         run: |
+          HELM_SET_ARGS=""
           while IFS='=' read -r key value; do
             if [ -n "$key" ]; then
-              escaped_value=$(echo "$value" | sed 's/"/\\"/g')
-              HELM_SET_ARGS="$HELM_SET_ARGS --helm-set appSecrets.$key=\"$escaped_value\""
+              HELM_SET_ARGS="$HELM_SET_ARGS --helm-set-string appSecrets.$key='$value'"
             fi
-          done <<< "${{ steps.secrets.outputs.merged_secrets }}"  
+          done <<< "${{ steps.secrets.outputs.merged_secrets }}"
 
           argocd app create ${{ env.PROJECT_NAME_WITH_ENV }} \
             --upsert \
