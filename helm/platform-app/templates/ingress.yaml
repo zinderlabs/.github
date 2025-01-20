@@ -1,6 +1,15 @@
-{{- define "host" }}
+{{- define "domain" }}
 {{- if .Values.deployment.hideEnvironment }}{{ .Values.app.name }}.zinderlabs.com
-{{- else }}{{ .Values.app.name }}.{{ .Values.deployment.environment }}.zinderlabs.com
+{{- else }}
+{{ .Values.app.name }}.{{ .Values.deployment.environment }}.zinderlabs.com
+{{- end }}
+{{- end }}
+
+{{- define "host"}}
+{{- if .Values.deployment.overrideDomain }}
+{{- .Values.deployment.overrideDomain }}.zinderlabs.com
+{{- else }}
+{{- template "domain" . }}
 {{- end }}
 {{- end }}
 
