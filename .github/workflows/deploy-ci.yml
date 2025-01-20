@@ -8,8 +8,7 @@ env:
   ENVIRONMENT_SLUG: ${{ github.ref == 'refs/heads/main' && 'prd' || 'staging'}}
   PROJECT_NAME: ${{ github.event.repository.name }}
   PROJECT_NAME_WITH_ENV: ${{ github.event.repository.name }}-${{ github.ref == 'refs/heads/main' && 'prd' || 'staging'}}
-  ENV_SECRETS: ${{ github.ref == 'refs/heads/main' && secrets.ENV_SECRETS_PRD || secrets.ENV_SECRETS_DEV }}
-  APP_VALUES: ${{ github.ref == 'refs/heads/main' && 'values.prd.yaml' || 'values.staging.yaml' }}
+  APP_VALUES: values.${{ github.ref == 'refs/heads/main' && 'prd' || 'staging' }}.yaml
   ARGOCD_SERVER: argocd.zinderlabs.com
   ORG_ARGOCD_AUTH_TOKEN: ${{ secrets.ORG_ARGOCD_AUTH_TOKEN }}
   HELM_CHART_PATH: helm/platform-app
@@ -37,33 +36,49 @@ jobs:
           mkdir -p ${{ env.HELM_CHART_PATH }}
           cp -R ci-central/helm/platform-app/* ${{ env.HELM_CHART_PATH }}/
 
-      - name: Create secret hash
+      - name: Process secrets and environment variables
+        id: secrets
         env:
           ALL_SECRETS: ${{ toJSON(secrets) }}
           ALL_VARS: ${{ toJSON(vars) }}
         run: |
+          process_env_vars() {
+            echo "$1" | jq -r '
+              to_entries 
+              | map(select(
+                  (.key | startswith("ORG_") | not) 
+                  and (.key != "github_token")
+              )) 
+              | .[] 
+              | "\(.key)=\(.value)"
+            '
+          }
+
           MERGED_SECRETS=""
           if [ -n "$ALL_SECRETS" ]; then
-            MERGED_SECRETS="$MERGED_SECRETS"$'\n'"$(echo "$ALL_SECRETS" | jq -r 'to_entries | map(select((.key | startswith("ORG_") | not) and (.key != "github_token"))) | .[] | "\(.key)=\(.value)"')"
+            MERGED_SECRETS="$(process_env_vars "$ALL_SECRETS")"
           fi
           if [ -n "$ALL_VARS" ]; then
-            MERGED_SECRETS="$MERGED_SECRETS"$'\n'"$(echo "$ALL_VARS" | jq -r 'to_entries | map(select(.key | startswith("ORG_") | not)) | .[] | "\(.key)=\(.value)"')"
+            MERGED_SECRETS="${MERGED_SECRETS}"$'\n'"$(process_env_vars "$ALL_VARS")"
           fi
 
           if [ -n "$MERGED_SECRETS" ]; then
-            echo "MERGED_SECRETS=$MERGED_SECRETS" >> $GITHUB_ENV
-            SECRET_HASH=$(echo -n "$MERGED_SECRETS" | sha512sum | awk '{print $1}')
-
+            # Export secrets to environment
             while IFS='=' read -r key value; do
               if [ -n "$key" ]; then
                 echo "$key=$value" >> $GITHUB_ENV
               fi
             done <<< "$MERGED_SECRETS"
+            
+            SECRET_HASH=$(echo -n "$MERGED_SECRETS" | sha512sum | awk '{print $1}')
+            echo "merged_secrets<<EOF" >> $GITHUB_OUTPUT
+            echo "$MERGED_SECRETS" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
           else
             SECRET_HASH="nosecrets"
           fi
-          echo "SECRET_HASH=$SECRET_HASH" >> $GITHUB_ENV
-          echo "CI_PROJECT_NAME=${{ env.PROJECT_NAME }}" >> $GITHUB_ENV
+
+          echo "secret_hash=$SECRET_HASH" >> $GITHUB_OUTPUT
 
       - name: Setup ArgoCD CLI
         uses: clowdhaus/argo-cd-action/@main
@@ -71,81 +86,54 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           command: version
-          options: |
-            --client
-            --grpc-web
-            --loglevel debug
-            --logformat json
-
-      # - name: Configure ArgoCD CLI
-      #   run: |
-      #     mkdir -p ~/.ssh
-      #     echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/argocd-key
-      #     chmod 600 ~/.ssh/argocd-key
-      #     argocd repo add git@github.com:${{ github.repository }}.git \
-      #       --ssh-private-key-path ~/.ssh/argocd-key \
-      #       --upsert \
-      #       --grpc-web \
-      #       --loglevel debug \
-      #       --logformat json
+          options: --client --grpc-web --loglevel debug --logformat json
 
       - name: Substitute variables in values.yaml
         run: |
           envsubst < ${{ github.workspace }}/${{ env.APP_VALUES }} > substituted_values.yaml
-          cat substituted_values.yaml
 
-      - name: Get project commit info
-        id: project_commit
+      - name: Get commit information
+        id: git_info
         run: |
           echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
           echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "repo_url=${{ github.server_url }}/${{ github.repository }}" >> $GITHUB_OUTPUT
 
-      - name: Apply ArgoCD Application
-        env:
-          ALL_SECRETS: ${{ toJSON(secrets) }}
-          ALL_VARS: ${{ toJSON(vars) }}
+      - name: Trigger ArgoCD Deployment
         run: |
-          MERGED_SECRETS=""
-          if [ -n "$ALL_SECRETS" ]; then
-            MERGED_SECRETS="$MERGED_SECRETS"$'\n'"$(echo "$ALL_SECRETS" | jq -r 'to_entries | map(select((.key | startswith("ORG_") | not) and (.key != "github_token"))) | .[] | "\(.key)=\(.value)"')"
-          fi
-          if [ -n "$ALL_VARS" ]; then
-            MERGED_SECRETS="$MERGED_SECRETS"$'\n'"$(echo "$ALL_VARS" | jq -r 'to_entries | map(select(.key | startswith("ORG_") | not)) | .[] | "\(.key)=\(.value)"')"
-          fi
-
           HELM_SET_ARGS=""
           while IFS='=' read -r key value; do
-                    if [ -n "$key" ]; then
-                              HELM_SET_ARGS="$HELM_SET_ARGS --helm-set appSecrets.$key=$value"
-                    fi
-          done <<< "$MERGED_SECRETS"
+            if [ -n "$key" ]; then
+              HELM_SET_ARGS="$HELM_SET_ARGS --helm-set appSecrets.$key=$value"
+            fi
+          done <<< "${{ steps.secrets.outputs.merged_secrets }}"
 
-          argocd app create ${{ env.PROJECT_NAME_WITH_ENV }} --upsert \
-          --loglevel debug \
-          --logformat json \
-          --repo ${{ env.MANIFEST_REPO }} \
-          --path ${{ env.HELM_CHART_PATH }} \
-          --dest-server ${{ env.KUBERNETES_DEST }} \
-          --dest-namespace ${{ env.PROJECT_NAME_WITH_ENV }} \
-          --revision main \
-          --server ${{ env.ARGOCD_SERVER }} \
-          --auth-token ${{ env.ORG_ARGOCD_AUTH_TOKEN }} \
-          --grpc-web \
-          --project ${{ env.ARGOCD_PROJECT }} \
-          --helm-set imageCredentials.registry=${{ env.CONTAINER_REGISTRY }} \
-          --helm-set imageCredentials.token=${{ secrets.ORG_CONTAINER_REGISTRY_TOKEN }} \
-          --helm-set deployment.pathSlug=${{ github.event.repository.name }} \
-          --helm-set deployment.image=${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}/${{ github.ref == 'refs/heads/main' && 'prd' || 'staging'}}:${{ github.ref == 'refs/heads/main' && 'main' || 'staging'}} \
-          --helm-set deployment.environment=${{ env.ENVIRONMENT_SLUG }} \
-          --helm-set deployment.namespace=${{ env.PROJECT_NAME_WITH_ENV }} \
-          --helm-set deployment.projectCommit=${{ steps.project_commit.outputs.sha }} \
-          --helm-set deployment.projectCommitShort=${{ steps.project_commit.outputs.short_sha }} \
-          --helm-set deployment.projectRepoUrl=${{ steps.project_commit.outputs.repo_url }} \
-          --helm-set secretHash=${{ env.SECRET_HASH }} \
-          $HELM_SET_ARGS \
-          --values-literal-file ${{ github.workspace }}/substituted_values.yaml \
-          --sync-policy ${{ env.SYNC_POLICY }} \
-          --sync-option CreateNamespace=true \
-          --sync-option Force=true \
-          --sync-option Replace=true
+          argocd app create ${{ env.PROJECT_NAME_WITH_ENV }} \
+            --upsert \
+            --loglevel debug \
+            --logformat json \
+            --repo ${{ env.MANIFEST_REPO }} \
+            --path ${{ env.HELM_CHART_PATH }} \
+            --dest-server ${{ env.KUBERNETES_DEST }} \
+            --dest-namespace ${{ env.PROJECT_NAME_WITH_ENV }} \
+            --revision main \
+            --server ${{ env.ARGOCD_SERVER }} \
+            --auth-token ${{ env.ORG_ARGOCD_AUTH_TOKEN }} \
+            --grpc-web \
+            --project ${{ env.ARGOCD_PROJECT }} \
+            --helm-set imageCredentials.registry=${{ env.CONTAINER_REGISTRY }} \
+            --helm-set imageCredentials.token=${{ secrets.ORG_CONTAINER_REGISTRY_TOKEN }} \
+            --helm-set deployment.pathSlug=${{ github.event.repository.name }} \
+            --helm-set deployment.image=${{ env.CONTAINER_REGISTRY }}/${{ github.repository }}/${{ env.ENVIRONMENT_SLUG }}:${{ github.ref == 'refs/heads/main' && 'main' || 'staging' }} \
+            --helm-set deployment.environment=${{ env.ENVIRONMENT_SLUG }} \
+            --helm-set deployment.namespace=${{ env.PROJECT_NAME_WITH_ENV }} \
+            --helm-set deployment.projectCommit=${{ steps.git_info.outputs.sha }} \
+            --helm-set deployment.projectCommitShort=${{ steps.git_info.outputs.short_sha }} \
+            --helm-set deployment.projectRepoUrl=${{ steps.git_info.outputs.repo_url }} \
+            --helm-set secretHash=${{ steps.secrets.outputs.secret_hash }} \
+            $HELM_SET_ARGS \
+            --values-literal-file ${{ github.workspace }}/substituted_values.yaml \
+            --sync-policy ${{ env.SYNC_POLICY }} \
+            --sync-option CreateNamespace=true \
+            --sync-option Force=true \
+            --sync-option Replace=true
