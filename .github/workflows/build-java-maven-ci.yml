@@ -23,12 +23,12 @@ jobs:
       - name: Checkout repository ${{ github.repository }}
         uses: actions/checkout@v4
 
-      - name: Set up JDK ${{ inputs.JAVA_VERSION }}
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ inputs.JAVA_VERSION }}
-          distribution: "temurin"
-          cache: maven
+      # - name: Set up JDK ${{ inputs.JAVA_VERSION }}
+      #   uses: actions/setup-java@v4
+      #   with:
+      #     java-version: ${{ inputs.JAVA_VERSION }}
+      #     distribution: "temurin"
+      #     cache: maven
 
       - name: Build with Maven
         run: mvn ${{ inputs.BUILD_COMMAND }} --batch-mode --update-snapshots
@@ -37,4 +37,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Payload
-          path: ${{ inputs.BUILD_DIRECTORY }}
+          path: ${{ inputs.BUILD_DIRECTORY }}/*.jar
