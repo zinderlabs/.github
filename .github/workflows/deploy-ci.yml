@@ -78,7 +78,8 @@ jobs:
             SECRET_HASH="nosecrets"
           fi
 
-          echo "secret_hash=$SECRET_HASH" >> $GITHUB_OUTPUT
+          echo "SECRET_HASH=$SECRET_HASH" >> $GITHUB_OUTPUT
+          echo "CI_PROJECT_NAME=${{ env.PROJECT_NAME }}" >> $GITHUB_ENV
 
       - name: Setup ArgoCD CLI
         uses: clowdhaus/argo-cd-action/@main
