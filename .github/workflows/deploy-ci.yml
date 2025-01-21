@@ -105,7 +105,7 @@ jobs:
           declare -a helm_args=()
           while IFS='=' read -r key value; do
             if [ -n "$key" ]; then
-              helm_args+=(--helm-set-string "appSecrets.${key}=${value}")
+              helm_args+=(--helm-set-string "appSecrets.${key}=\"${value}\"")
             fi
           done <<< "${{ steps.secrets.outputs.merged_secrets }}"
 
