@@ -102,13 +102,12 @@ jobs:
 
       - name: Trigger ArgoCD Deployment
         run: |
+          declare -a helm_args=()
           while IFS='=' read -r key value; do
             if [ -n "$key" ]; then
-              HELM_SET_ARGS="$HELM_SET_ARGS --helm-set-string appSecrets.$key='$value'"
+              helm_args+=(--helm-set-string "appSecrets.${key}=${value}")
             fi
           done <<< "${{ steps.secrets.outputs.merged_secrets }}"
-
-          echo "$HELM_SET_ARGS"
 
           argocd app create ${{ env.PROJECT_NAME_WITH_ENV }} \
             --upsert \
@@ -133,7 +132,7 @@ jobs:
             --helm-set deployment.projectCommitShort=${{ steps.git_info.outputs.short_sha }} \
             --helm-set deployment.projectRepoUrl=${{ steps.git_info.outputs.repo_url }} \
             --helm-set secretHash=${{ steps.secrets.outputs.secret_hash }} \
-            $HELM_SET_ARGS \
+            "${helm_args[@]}" \
             --values-literal-file ${{ github.workspace }}/substituted_values.yaml \
             --sync-policy ${{ env.SYNC_POLICY }} \
             --sync-option CreateNamespace=true \
