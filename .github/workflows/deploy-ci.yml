@@ -102,10 +102,10 @@ jobs:
 
       - name: Trigger ArgoCD Deployment
         run: |
-          declare -a helm_args=()
+          HELM_SET_ARGS=()
           while IFS='=' read -r key value; do
             if [ -n "$key" ]; then
-              helm_args+=(--helm-set-string "appSecrets.${key}=\"${value}\"")
+              HELM_SET_ARGS+=(--helm-set "appSecrets.$key=$value")
             fi
           done <<< "${{ steps.secrets.outputs.merged_secrets }}"
 
