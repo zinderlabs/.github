@@ -1,17 +1,18 @@
-{{- define "domain" }}
-{{- if .Values.deployment.hideEnvironment }}{{ .Values.app.name }}.zinderlabs.com
-{{- else }}
+{{- define "domain" -}}
+{{- if .Values.deployment.hideEnvironment -}}
+{{ .Values.app.name }}.zinderlabs.com
+{{- else -}}
 {{ .Values.app.name }}.{{ .Values.deployment.environment }}.zinderlabs.com
-{{- end }}
-{{- end }}
+{{- end -}}
+{{- end -}}
 
-{{- define "host"}}
-{{- if .Values.deployment.overrideDomain }}
+{{- define "host" -}}
+{{- if .Values.deployment.overrideDomain -}}
 {{- .Values.deployment.overrideDomain }}.zinderlabs.com
-{{- else }}
-{{- template "domain" . }}
-{{- end }}
-{{- end }}
+{{- else -}}
+{{- template "domain" . -}}
+{{- end -}}
+{{- end -}}
 
 {{- if .Values.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
