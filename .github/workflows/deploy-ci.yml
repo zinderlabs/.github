@@ -109,6 +109,8 @@ jobs:
             fi
           done <<< "${{ steps.secrets.outputs.merged_secrets }}"
 
+          echo "$HELM_SET_ARGS"
+
           argocd app create ${{ env.PROJECT_NAME_WITH_ENV }} \
             --upsert \
             --loglevel debug \
