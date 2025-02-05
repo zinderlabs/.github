@@ -3,12 +3,6 @@ name: Package Docker Image
 on:
   workflow_call:
     inputs:
-      RUNTIME_VERSION:
-        required: false
-        type: string
-      BUILD_DIRECTORY:
-        required: false
-        type: string
       DOCKERFILE_PATH:
         required: true
         type: string
