@@ -85,7 +85,6 @@ jobs:
           fi
 
           if [ -n "$MERGED_SECRETS" ]; then
-            # Create a multiline string with each build arg on a new line
             BUILD_ARGS=""
             while IFS='=' read -r key value; do
               if [ -n "$key" ]; then
@@ -93,10 +92,10 @@ jobs:
               fi
             done <<< "$MERGED_SECRETS"
 
-            # Write the build args to GITHUB_OUTPUT with proper formatting
             {
               echo "build-args<<EOF"
               echo "$BUILD_ARGS"
+              echo "${{ inputs.EXTRA_BUILD_ARGS }}"
               echo "EOF"
             } >> $GITHUB_OUTPUT
           else
