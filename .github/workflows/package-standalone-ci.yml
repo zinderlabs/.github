@@ -85,17 +85,18 @@ jobs:
           fi
 
           if [ -n "$MERGED_SECRETS" ]; then
-            BUILD_ARGS=()
+            BUILD_ARGS=""
             # Export secrets to environment
             while IFS='=' read -r key value; do
               if [ -n "$key" ]; then
-                BUILD_ARGS+=("--build-arg" "$key=$value")
+                if [ -n "$BUILD_ARGS" ]; then
+                  BUILD_ARGS="$BUILD_ARGS "
+                fi
+                BUILD_ARGS="$BUILD_ARGS$key=$value"
               fi
             done <<< "$MERGED_SECRETS"
 
-            echo "BUILD ARGS: ${BUILD_ARGS[@]}"
-
-            echo "BUILD_ARGS=${BUILD_ARGS[@]}" >> $GITHUB_OUTPUT
+            echo "build-args=$BUILD_ARGS" >> $GITHUB_OUTPUT
           else
             echo "No secrets to process"
           fi
@@ -108,7 +109,7 @@ jobs:
           context: ${{ github.workspace }}
           file: ${{ inputs.DOCKERFILE_PATH }}
           build-args: |
-            ${{ steps.secrets.outputs.BUILD_ARGS }}
+            ${{ steps.secrets.outputs.build-args }}
             ${{ inputs.EXTRA_BUILD_ARGS }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
