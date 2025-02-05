@@ -17,6 +17,7 @@ env:
 
 jobs:
   package:
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
