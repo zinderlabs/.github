@@ -57,6 +57,48 @@ jobs:
         with:
           images: ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}
 
+      - name: Process secrets and environment variables to pass to Docker build
+        id: secrets
+        env:
+          ALL_SECRETS: ${{ toJSON(secrets) }}
+          ALL_VARS: ${{ toJSON(vars) }}
+        run: |
+          process_env_vars() {
+            echo "$1" | jq -r '
+              to_entries 
+              | map(select(
+                  (.key | startswith("ORG_") | not) 
+                  and (.key != "github_token")
+              )) 
+              | .[] 
+              | "\(.key)=\(.value)"
+            '
+          }
+
+          MERGED_SECRETS=""
+          if [ -n "$ALL_SECRETS" ]; then
+            MERGED_SECRETS="$(process_env_vars "$ALL_SECRETS")"
+          fi
+          if [ -n "$ALL_VARS" ]; then
+            MERGED_SECRETS="${MERGED_SECRETS}"$'\n'"$(process_env_vars "$ALL_VARS")"
+          fi
+
+          if [ -n "$MERGED_SECRETS" ]; then
+            BUILD_ARGS=()
+            # Export secrets to environment
+            while IFS='=' read -r key value; do
+              if [ -n "$key" ]; then
+                BUILD_ARGS+=("--build-arg" "$key=$value")
+              fi
+            done <<< "$MERGED_SECRETS"
+
+            echo "BUILD ARGS: ${BUILD_ARGS[@]}"
+
+            echo "BUILD_ARGS=${BUILD_ARGS[@]}" >> $GITHUB_OUTPUT
+          else
+            echo "No secrets to process"
+          fi
+
       # Build and push Docker image with Buildx
       - name: Build and push Docker image
         id: build-and-push
@@ -65,6 +107,7 @@ jobs:
           context: ${{ github.workspace }}
           file: ${{ inputs.DOCKERFILE_PATH }}
           build-args: |
+            ${{ steps.secrets.outputs.BUILD_ARGS }}
             ${{ inputs.EXTRA_BUILD_ARGS }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
