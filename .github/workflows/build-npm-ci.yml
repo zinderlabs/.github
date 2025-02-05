@@ -31,6 +31,41 @@ jobs:
       - name: Installing node dependencies
         run: npm ci
 
+      - name: Source secrets and vars into environment
+        env:
+          ALL_SECRETS: ${{ toJSON(secrets) }}
+          ALL_VARS: ${{ toJSON(vars) }}
+        run: |
+          process_env_vars() {
+            echo "$1" | jq -r '
+              to_entries 
+              | map(select(
+                  (.key | startswith("ORG_") | not) 
+                  and (.key != "github_token")
+              )) 
+              | .[] 
+              | "\(.key)=\(.value)"
+            '
+          }
+
+          MERGED_SECRETS=""
+          if [ -n "$ALL_SECRETS" ]; then
+            MERGED_SECRETS="$(process_env_vars "$ALL_SECRETS")"
+          fi
+          if [ -n "$ALL_VARS" ]; then
+            MERGED_SECRETS="${MERGED_SECRETS}"$'\n'"$(process_env_vars "$ALL_VARS")"
+          fi
+
+          if [ -n "$MERGED_SECRETS" ]; then
+            while IFS='=' read -r key value; do
+              if [ -n "$key" ]; then
+                echo "$key=$value" >> $GITHUB_ENV
+              fi
+            done <<< "$MERGED_SECRETS"
+          else
+            echo "No secrets to process"
+          fi
+
       - name: Run Build Command
         run: npm run ${{ inputs.BUILD_COMMAND }} --if-present
 
