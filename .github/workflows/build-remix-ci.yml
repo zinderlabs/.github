@@ -53,6 +53,6 @@ jobs:
         with:
           name: Payload
           path: |
-            node_modules/
+            node_modules/*
             package.json
-            ${{ inputs.BUILD_DIRECTORY }}
+            ${{ inputs.BUILD_DIRECTORY }}/*
