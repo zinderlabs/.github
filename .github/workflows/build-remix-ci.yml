@@ -54,6 +54,6 @@ jobs:
           name: Payload
           include-hidden-files: true
           path: |
-            node_modules/**/*
+            node_modules
             package.json
             ${{ inputs.BUILD_DIRECTORY }}
