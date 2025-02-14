@@ -4,11 +4,6 @@ ARG BUILD_PATH
 FROM node:${RUNTIME_VERSION}-alpine
 WORKDIR /app
 
-RUN echo "PWD is: $PWD"
-RUN ls
-
 COPY ./build-artifact ./
 
-RUN ls -a
-RUN cd ./node_modules && ls -a && cd ./.bin && ls -a
 CMD ["./node_modules/.bin/remix-serve", "dist/server/index.js"]
