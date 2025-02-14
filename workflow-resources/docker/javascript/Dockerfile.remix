@@ -7,8 +7,8 @@ WORKDIR /app
 RUN echo "PWD is: $PWD"
 RUN ls
 
-COPY ./build-artifact ./
+COPY ${BUILD_PATH} ./
 
 RUN ls
-
+RUN cd ./node_modules/.bin && ls
 CMD ["./node_modules/.bin/remix-serve", "dist/server/index.js"]
