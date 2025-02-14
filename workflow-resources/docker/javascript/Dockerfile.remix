@@ -10,5 +10,5 @@ RUN ls
 COPY ./build-artifact ./
 
 RUN ls
-RUN cd ./node_modules/.bin && ls
+RUN cd ./node_modules && ls && cd ./.bin && ls
 CMD ["./node_modules/.bin/remix-serve", "dist/server/index.js"]
