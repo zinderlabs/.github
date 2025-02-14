@@ -5,11 +5,10 @@ FROM node:${RUNTIME_VERSION}-alpine
 WORKDIR /app
 
 RUN echo "PWD is: $PWD"
+RUN ls
 
-COPY ./${BUILD_PATH} ./dist
-COPY ./node_modules ./node_modules
-COPY ./public ./public
-COPY ./vite.config.ts ./
-COPY ./package.json ./
+COPY ./${BUILD_PATH} ./
+
+RUN ls
 
 CMD ["./node_modules/.bin/remix-serve", "dist/server/index.js"]
