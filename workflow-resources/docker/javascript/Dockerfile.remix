@@ -7,7 +7,7 @@ WORKDIR /app
 RUN echo "PWD is: $PWD"
 RUN ls
 
-COPY ${BUILD_PATH} ./
+COPY ./build-artifact ./
 
 RUN ls
 RUN cd ./node_modules/.bin && ls
