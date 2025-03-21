@@ -43,7 +43,7 @@ jobs:
           cache: "yarn"
 
       - name: Installing node dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: Run Build Command
         run: yarn ${{ inputs.BUILD_COMMAND }}
