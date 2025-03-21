@@ -17,7 +17,7 @@ on:
       YARN_VERSION:
         required: false
         type: string
-        default: "4.1.1"
+        default: "berry"
       USE_LEGACY:
         required: false
         type: boolean
