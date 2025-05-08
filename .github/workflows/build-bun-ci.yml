@@ -1,0 +1,51 @@
+# File: .github/workflows/build-bun-ci.yml
+
+name: Build Bun project
+
+on:
+  workflow_call:
+    inputs:
+      BUILD_COMMAND:
+        required: true
+        type: string
+      NODE_VERSION:
+        required: false
+        type: string
+        default: "20"
+      BUN_VERSION:
+        required: false
+        type: string
+        default: "latest"
+      BUILD_DIRECTORY:
+        required: false
+        type: string
+        default: "dist"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository ${{ github.repository }}
+        uses: actions/checkout@v4
+
+      - name: Using Node version ${{ inputs.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.NODE_VERSION }}
+
+      - name: Setup Bun ${{ inputs.BUN_VERSION }}
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: ${{ inputs.BUN_VERSION }}
+
+      - name: Installing dependencies with Bun
+        run: bun install
+
+      - name: Run Build Command
+        run: bun run ${{ inputs.BUILD_COMMAND }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Payload
+          path: ${{ inputs.BUILD_DIRECTORY }}
