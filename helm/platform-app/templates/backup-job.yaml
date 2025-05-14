@@ -23,7 +23,7 @@ spec:
       template:
         spec:
           imagePullSecrets:
-            - name: github-registry
+            - name: ghcr-login-secret
           containers:
             - name: database-backup
               image: ghcr.io/zinderlabs/cicd-central:backup-job
