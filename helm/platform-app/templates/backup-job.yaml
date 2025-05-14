@@ -26,7 +26,7 @@ spec:
             - name: github-registry
           containers:
             - name: database-backup
-              image: registry.zinderlabs.com/platform/cicd-central:backup-job
+              image: ghcr.io/zinderlabs/cicd-central:backup-job
               imagePullPolicy: Always
               envFrom:
                 - secretRef:
