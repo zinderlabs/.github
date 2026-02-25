@@ -1,5 +1,5 @@
 ARG RUNTIME_VERSION
-FROM openjdk:${RUNTIME_VERSION}
+FROM eclipse-temurin:${RUNTIME_VERSION}-ubi9-minimal
 
 ARG BUILD_PATH
 
