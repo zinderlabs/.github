@@ -6,7 +6,7 @@ on:
       NGINX_VERSION:
         required: false
         type: string
-        default: "1.26.2"
+        default: "1.30.8"
       BUILD_DIRECTORY:
         required: false
         type: string
